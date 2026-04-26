@@ -1,0 +1,8 @@
+{
+    "profiles": {
+        "MeOrgOrganizeTest": {
+            "commandName": "Project",
+            "commandLineArgs": "organize --source /some/path"
+        }
+    }
+}
