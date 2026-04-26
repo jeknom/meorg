@@ -15,12 +15,7 @@ public class OrganizeCommand : Command
             Required = true
         };
 
-        sourceDirOption.Validators.Add(result =>
-        {
-            result.NotEmptyString();
-            result.IsDirectory();
-            result.HasReadPermission();
-        });
+        sourceDirOption.Validators.Add(result => result.IsDirectoryPathWithReadPermissions());
         Options.Add(sourceDirOption);
 
         Option<DirectoryInfo> targetDirOption = new("--target")
@@ -28,12 +23,7 @@ public class OrganizeCommand : Command
             Description = "Directory where to copy your organized media.",
             Required = true
         };
-        targetDirOption.Validators.Add(result =>
-        {
-            result.NotEmptyString();
-            result.IsDirectory();
-            result.HasWritePermission();
-        });
+        targetDirOption.Validators.Add(result => result.IsDirectoryPathWithWritePermissions());
         Options.Add(targetDirOption);
 
 

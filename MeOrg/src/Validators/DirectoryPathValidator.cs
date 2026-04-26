@@ -4,41 +4,47 @@ using System.CommandLine.Parsing;
 
 public static partial class OptionParseResultExtensions
 {
-    public static void NotEmptyString(this OptionResult result)
+    public static void IsDirectoryPathWithReadPermissions(this OptionResult result)
     {
         if (result.Tokens.Count == 0)
         {
             result.AddError("Source directory path not specified");
+            return;
         }
-    }
 
-    public static void IsDirectory(this OptionResult result)
-    {
         string dirPath = result.Tokens.Single().Value;
         if (!Directory.Exists(dirPath))
         {
             result.AddError($"Source directory '{dirPath}' does not exist");
+            return;
         }
-    }
-
-    public static void HasReadPermission(this OptionResult result)
-    {
-        string path = result.Tokens.Single().Value;
 
         try
         {
-            _ = Directory.EnumerateFileSystemEntries(path).GetEnumerator().MoveNext();
+            _ = Directory.EnumerateFileSystemEntries(dirPath).GetEnumerator().MoveNext();
         }
         catch (UnauthorizedAccessException)
         {
-            result.AddError($"No read permission for directory '{path}'");
+            result.AddError($"No read permission for directory '{dirPath}'");
         }
     }
 
-    public static void HasWritePermission(this OptionResult result)
+    public static void IsDirectoryPathWithWritePermissions(this OptionResult result)
     {
-        string path = result.Tokens.Single().Value;
-        string probe = Path.Combine(path, $".meorg-write-test-{Guid.NewGuid():N}");
+        if (result.Tokens.Count == 0)
+        {
+            result.AddError("Source directory path not specified");
+            return;
+        }
+
+        string dirPath = result.Tokens.Single().Value;
+        if (!Directory.Exists(dirPath))
+        {
+            result.AddError($"Source directory '{dirPath}' does not exist");
+            return;
+        }
+
+        string probe = Path.Combine(dirPath, $".meorg-write-test-{Guid.NewGuid():N}");
         try
         {
             using (File.Create(probe)) { }
@@ -46,7 +52,7 @@ public static partial class OptionParseResultExtensions
         }
         catch (UnauthorizedAccessException)
         {
-            result.AddError($"No write permission for directory '{path}'");
+            result.AddError($"No write permission for directory '{dirPath}'");
         }
     }
 }
