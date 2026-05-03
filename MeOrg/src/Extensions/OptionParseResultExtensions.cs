@@ -2,7 +2,7 @@ namespace MeOrg.Validators;
 
 using System.CommandLine.Parsing;
 
-public static partial class OptionParseResultExtensions
+public static class OptionParseResultExtensions
 {
     public static void IsDirectoryPathWithReadPermissions(this OptionResult result)
     {
