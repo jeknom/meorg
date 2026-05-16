@@ -68,6 +68,4 @@ public static class Constants
         ".mxf",
         ".insv",
     };
-
-    public static readonly string EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 }
