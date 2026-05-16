@@ -68,4 +68,6 @@ public static class Constants
         ".mxf",
         ".insv",
     };
+
+    public const string DEFAULT_SUBDIR_NAME = "Misc";
 }

@@ -51,7 +51,7 @@ public class MediaOrganizer : IMediaOrganizer
         DirectoryInfo target,
         CancellationToken cancellationToken)
     {
-        string subDirName = "Misc";
+        string subDirName = Constants.DEFAULT_SUBDIR_NAME;
 
         if (TryExtractCreationTime(path, out DateTime creationDateTime))
         {
