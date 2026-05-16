@@ -17,15 +17,15 @@ using var sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
 });
 
 using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
-ILogger logger = factory.CreateLogger<Program>();
 
-var writer = new BackgroundFileWriter();
+var writer = new BackgroundFileWriter(factory.CreateLogger<BackgroundFileWriter>());
+var organizer = new MediaOrganizer(writer, factory.CreateLogger<MediaOrganizer>(), cts.Token);
 
 Task writerBgTask = Task.Run(() => writer.WriteFilesContiniously(cts.Token));
 
 RootCommand rootCommand = new("MeOrg is a media organizer CLI tool.");
 
-rootCommand.Subcommands.Add(new OrganizeCommand(writer, logger));
+rootCommand.Subcommands.Add(new OrganizeCommand(organizer));
 
 ParseResult parseResult = rootCommand.Parse(args);
 

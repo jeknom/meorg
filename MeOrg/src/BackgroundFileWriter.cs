@@ -20,6 +20,7 @@ public class BackgroundFileWriter : IBackgroundFileWriter
         _logger = logger;
     }
 
+    // THIS NEEDS TO CHECK IF THE FILE ALREADY EXISTS BECAUSE ITS SYNCED
     public async Task WriteFilesContiniously(CancellationToken cancellationToken)
     {
         await foreach (var (from, to) in _fileChannel.Reader.ReadAllAsync(cancellationToken))
