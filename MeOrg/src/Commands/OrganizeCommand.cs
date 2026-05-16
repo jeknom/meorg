@@ -52,61 +52,76 @@ public class OrganizeCommand : Command
             .EnumerateFiles(sourceDir.FullName, "*", SearchOption.AllDirectories)
             .Where(IsSupportedExtension);
 
-        foreach (var path in filesPaths)
+        ParallelOptions _metadataExtractionOptions = new()
         {
-            CultureInfo enUs = new CultureInfo("en-US");
-            DateTime date = default;
-            try
+            MaxDegreeOfParallelism = Environment.ProcessorCount,
+            CancellationToken = cancellationToken
+        };
+
+        await Parallel.ForEachAsync(
+            filesPaths,
+            _metadataExtractionOptions,
+            async (path, ct) =>
             {
-                IEnumerable<MetadataExtractor.Directory> directories = ImageMetadataReader.ReadMetadata(path);
-
-                var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out date) ?? false)
+                if (TryExtractCreationTime(path, out DateTime creationTime))
                 {
-                    continue;
+                    string fileName = Path.GetFileName(path);
+                    string destinationPath = $"{targetDir.FullName}/{ToDateString(creationTime)}/{fileName}";
+                    await _writer.TryAddFile(fromPath: path, toPath: destinationPath, cancellationToken);
                 }
-
-                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out date) ?? false)
-                {
-                    continue;
-                }
-
-                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTime, out date) ?? false)
-                {
-                    continue;
-                }
-
-                var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
-                if (gpsDirectory?.TryGetGpsDate(out date) ?? false)
-                {
-                    continue;
-                }
-
-                var quickTimeDirectory = directories.OfType<QuickTimeMetadataHeaderDirectory>().FirstOrDefault();
-                if (quickTimeDirectory?.TryGetDateTime(QuickTimeMetadataHeaderDirectory.TagCreationDate, out date) ?? false)
-                {
-                    continue;
-                }
-
-                _logger.LogWarning("Could not parse creation date for file '{path}'", path);
-            }
-            catch (ImageProcessingException processingException)
-            {
-                _logger.LogWarning(processingException, "Failed to process image path '{path}'", path);
-            }
-            finally
-            {
-                if (date != default)
-                {
-                    _logger.LogInformation("Date: {date}", date.ToString());
-                }
-            }
-        }
+            });
     }
     // 2. When encountering any of the specified files of type, enqueue them to bounded channel or concurrent queue (what is the difference?)
 
     // 3. Queue could live in its own class and have a continious task that writes files
     // 4. Profit?
+
+    private bool TryExtractCreationTime(string path, out DateTime createdDateTime)
+    {
+        try
+        {
+            IEnumerable<MetadataExtractor.Directory> directories = ImageMetadataReader.ReadMetadata(path);
+
+            var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out createdDateTime) ?? false)
+            {
+                return true;
+            }
+
+            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out createdDateTime) ?? false)
+            {
+                return true;
+            }
+
+            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTime, out createdDateTime) ?? false)
+            {
+                return true;
+            }
+
+            var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
+            if (gpsDirectory?.TryGetGpsDate(out createdDateTime) ?? false)
+            {
+                return true;
+            }
+
+            var quickTimeDirectory = directories.OfType<QuickTimeMetadataHeaderDirectory>().FirstOrDefault();
+            if (quickTimeDirectory?.TryGetDateTime(QuickTimeMetadataHeaderDirectory.TagCreationDate, out createdDateTime) ?? false)
+            {
+                return true;
+            }
+
+            _logger.LogWarning("Could not parse creation date for file '{path}'", path);
+        }
+        catch (ImageProcessingException processingException)
+        {
+            _logger.LogWarning(processingException, "Failed to process image path '{path}'", path);
+        }
+
+        createdDateTime = default;
+        return false;
+    }
+
+    private static string ToDateString(DateTime dateTime) => dateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     private static bool IsSupportedExtension(string path)
     {

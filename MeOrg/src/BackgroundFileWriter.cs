@@ -1,17 +1,24 @@
 using System.Threading.Channels;
+using Microsoft.Extensions.Logging;
 
 namespace MeOrg;
 
 public interface IBackgroundFileWriter
 {
-    bool TryAddFile(string fromPath, string toPath);
+    Task<bool> TryAddFile(string fromPath, string toPath, CancellationToken cancellationToken);
     void Shutdown();
 }
 
 public class BackgroundFileWriter : IBackgroundFileWriter
 {
     private readonly Channel<(string fromPath, string toPath)> _fileChannel =
-        Channel.CreateUnbounded<(string fromPath, string toPath)>();
+        Channel.CreateBounded<(string fromPath, string toPath)>(500);
+    private readonly ILogger<BackgroundFileWriter> _logger;
+
+    public BackgroundFileWriter(ILogger<BackgroundFileWriter> logger)
+    {
+        _logger = logger;
+    }
 
     public async Task WriteFilesContiniously(CancellationToken cancellationToken)
     {
@@ -27,8 +34,14 @@ public class BackgroundFileWriter : IBackgroundFileWriter
         }
     }
 
-    public bool TryAddFile(string fromPath, string toPath)
+    public async Task<bool> TryAddFile(string fromPath, string toPath, CancellationToken cancellationToken)
     {
+        if (!await _fileChannel.Writer.WaitToWriteAsync(cancellationToken))
+        {
+            _logger.LogError("Failed to write file from '{from}' to '{to}'. The file channel has likely been completed already.", fromPath, toPath);
+            return false;
+        }
+
         return _fileChannel.Writer.TryWrite((fromPath, toPath));
     }
 
