@@ -22,4 +22,8 @@
     <ProjectReference Include="..\MeOrg\MeOrg.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="TestAssets\**\*" Exclude="**\.DS_Store" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
