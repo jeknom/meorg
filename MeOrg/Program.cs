@@ -21,7 +21,7 @@ using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsol
 var writer = new BackgroundFileWriter(factory.CreateLogger<BackgroundFileWriter>());
 var organizer = new MediaOrganizer(writer, factory.CreateLogger<MediaOrganizer>(), cts.Token);
 
-Task writerBgTask = Task.Run(() => writer.WriteFilesContiniously(cts.Token));
+Task writerBgTask = Task.Run(() => writer.WriteFilesContinuously(cts.Token));
 
 RootCommand rootCommand = new("MeOrg is a media organizer CLI tool.");
 

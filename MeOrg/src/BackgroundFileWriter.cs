@@ -1,3 +1,4 @@
+using System.Text;
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 
@@ -20,18 +21,37 @@ public class BackgroundFileWriter : IBackgroundFileWriter
         _logger = logger;
     }
 
-    // THIS NEEDS TO CHECK IF THE FILE ALREADY EXISTS BECAUSE ITS SYNCED
-    public async Task WriteFilesContiniously(CancellationToken cancellationToken)
+    public async Task WriteFilesContinuously(CancellationToken cancellationToken)
     {
         await foreach (var (from, to) in _fileChannel.Reader.ReadAllAsync(cancellationToken))
         {
-            string? directory = Path.GetDirectoryName(to);
-            if (directory != null && !Directory.Exists(directory))
+            try
             {
-                Directory.CreateDirectory(directory);
-            }
+                string? directory = Path.GetDirectoryName(to);
+                if (directory != null && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
 
-            File.Copy(from, to);
+                if (!File.Exists(to))
+                {
+                    File.Copy(from, to);
+                    continue;
+                }
+
+                string suffixedName = to;
+                do
+                {
+                    suffixedName = FileNameHelper.GetNextPossiblePath(suffixedName);
+                }
+                while (File.Exists(suffixedName));
+
+                File.Copy(from, suffixedName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while copying from '{from}' to '{to}'", from, to);
+            }
         }
     }
 
@@ -39,11 +59,17 @@ public class BackgroundFileWriter : IBackgroundFileWriter
     {
         if (!await _fileChannel.Writer.WaitToWriteAsync(cancellationToken))
         {
-            _logger.LogError("Failed to write file from '{from}' to '{to}'. The file channel has likely been completed already.", fromPath, toPath);
+            _logger.LogError("Failed to write to channel for paths: from '{from}' to '{to}'. The file channel has likely been completed already.", fromPath, toPath);
             return false;
         }
 
-        return _fileChannel.Writer.TryWrite((fromPath, toPath));
+        if (!_fileChannel.Writer.TryWrite((fromPath, toPath)))
+        {
+            _logger.LogError("Failed to write file from '{from}' to '{to}'.", fromPath, toPath);
+            return false;
+        }
+
+        return true;
     }
 
     public void Shutdown()
