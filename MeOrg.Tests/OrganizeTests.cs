@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Xunit.Abstractions;
+﻿using Xunit.Abstractions;
 
 namespace MeOrg.Tests;
 
@@ -9,7 +7,7 @@ public class OrganizeTests : IDisposable
     private readonly IMediaOrganizer _mediaOrganizer;
     private readonly BackgroundFileWriter _writer;
     private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-    private readonly string _sourceBase = new(Path.Combine(AppContext.BaseDirectory, "Scenarios"));
+    private readonly string _sourceBase = new(Path.Combine(AppContext.BaseDirectory, "TestFiles/Scenarios"));
     private readonly DirectoryInfo _target = Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "TestTarget", Guid.NewGuid().ToString()));
 
     public OrganizeTests(ITestOutputHelper output)
@@ -37,6 +35,14 @@ public class OrganizeTests : IDisposable
         await AssertFileExists(GetTargetFilePath("Misc/jumble.png"));
     }
 
+    [Fact]
+    public async Task Organize_Does_Not_Copy_Unsupported_Files()
+    {
+        DirectoryInfo source = new(Path.Combine(_sourceBase, "UnsupportedFiles"));
+        await _mediaOrganizer.Organize(source, _target, CancellationToken.None);
+        await AssertFileDoesNotExistAfterDelay(GetTargetFilePath("Misc/some.txt"));
+    }
+
     [Fact(Timeout = 10000)]
     public async Task Organize_Namesakes()
     {
@@ -50,7 +56,7 @@ public class OrganizeTests : IDisposable
         await AssertFileExists(GetTargetFilePath("Misc/giraffe (2).jpg"));
     }
 
-    private static async Task AssertFileExists(string filePath, int timeoutMs = 999999999)
+    private static async Task AssertFileExists(string filePath, int timeoutMs = 1000)
     {
         CancellationTokenSource cts = new();
         cts.CancelAfter(timeoutMs);
@@ -66,6 +72,18 @@ public class OrganizeTests : IDisposable
         }
 
         Assert.Fail($"Asserting file '{filePath}' exists timed out.");
+    }
+
+    private static async Task AssertFileDoesNotExistAfterDelay(string filePath, int delay = 1000)
+    {
+        CancellationTokenSource cts = new();
+        cts.CancelAfter(delay);
+
+        while (!cts.Token.IsCancellationRequested)
+        {
+            Assert.False(File.Exists(filePath));
+            await Task.Delay(100);
+        }
     }
 
     private string GetTargetFilePath(string relativePath)

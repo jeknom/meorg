@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Scenarios\**\*" Exclude="**\.DS_Store" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="TestFiles\**\*" Exclude="**\.DS_Store" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
