@@ -8,7 +8,11 @@ namespace MeOrg;
 
 public interface IMediaOrganizer
 {
-    Task Organize(DirectoryInfo source, DirectoryInfo target, CancellationToken cancellationToken);
+    Task Organize(
+        DirectoryInfo source,
+        DirectoryInfo target,
+        bool skipDedupe,
+        CancellationToken cancellationToken);
 }
 
 public class MediaOrganizer : IMediaOrganizer
@@ -36,6 +40,7 @@ public class MediaOrganizer : IMediaOrganizer
     public async Task Organize(
         DirectoryInfo source,
         DirectoryInfo target,
+        bool skipDedupe,
         CancellationToken cancellationToken)
     {
         foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
@@ -48,10 +53,14 @@ public class MediaOrganizer : IMediaOrganizer
             _duplicateDetector.TrySetFileSeen(targetPath);
         }
 
-        var filesPaths = System.IO.Directory
+        IEnumerable<string> filesPaths = System.IO.Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
-            .Where(IsSupportedExtension)
-            .Where(_duplicateDetector.TrySetFileSeen);
+            .Where(IsSupportedExtension);
+
+        if (!skipDedupe)
+        {
+            filesPaths = filesPaths.Where(_duplicateDetector.TrySetFileSeen);
+        }
 
         await Parallel.ForEachAsync(
             filesPaths,

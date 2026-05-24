@@ -30,22 +30,25 @@ public class OrganizeCommand : Command
         targetDirOption.Validators.Add(result => result.IsDirectoryPathWithWritePermissions());
         Options.Add(targetDirOption);
 
+        Option<bool> skipDedupe = new("--skip-dedupe")
+        {
+            Description = "Disables duplicate detection. Defaults to `false`.",
+            Required = false
+        };
 
         SetAction((parseResult, ct) => OrganizeAction(
             sourceDir: parseResult.GetValue(sourceDirOption)!,
             targetDir: parseResult.GetValue(targetDirOption)!,
+            skipDedupe: parseResult.GetValue(skipDedupe),
             cancellationToken: ct));
     }
 
     private async Task OrganizeAction(
         DirectoryInfo sourceDir,
         DirectoryInfo targetDir,
+        bool skipDedupe,
         CancellationToken cancellationToken)
     {
-        await _organizer.Organize(sourceDir, targetDir, cancellationToken);
+        await _organizer.Organize(sourceDir, targetDir, skipDedupe, cancellationToken);
     }
-    // 2. When encountering any of the specified files of type, enqueue them to bounded channel or concurrent queue (what is the difference?)
-
-    // 3. Queue could live in its own class and have a continious task that writes files
-    // 4. Profit?    
 }
