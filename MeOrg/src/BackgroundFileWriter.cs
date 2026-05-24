@@ -14,10 +14,12 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 {
     private readonly Channel<(string fromPath, string toPath)> _fileChannel =
         Channel.CreateBounded<(string fromPath, string toPath)>(500);
+    private readonly RunReport _report;
     private readonly ILogger<BackgroundFileWriter> _logger;
 
-    public BackgroundFileWriter(ILogger<BackgroundFileWriter> logger)
+    public BackgroundFileWriter(RunReport report, ILogger<BackgroundFileWriter> logger)
     {
+        _report = report;
         _logger = logger;
     }
 
@@ -47,6 +49,8 @@ public class BackgroundFileWriter : IBackgroundFileWriter
                 while (File.Exists(suffixedName));
 
                 File.Copy(from, suffixedName);
+
+                _report.ReportFileCopied();
             }
             catch (Exception ex)
             {

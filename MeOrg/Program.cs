@@ -18,8 +18,9 @@ using var sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
 
 using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
 
-var writer = new BackgroundFileWriter(factory.CreateLogger<BackgroundFileWriter>());
-var organizer = new MediaOrganizer(writer, factory.CreateLogger<MediaOrganizer>(), cts.Token);
+var report = new RunReport(factory.CreateLogger<RunReport>());
+var writer = new BackgroundFileWriter(report, factory.CreateLogger<BackgroundFileWriter>());
+var organizer = new MediaOrganizer(writer, factory.CreateLogger<MediaOrganizer>(), report, cts.Token);
 
 Task writerBgTask = Task.Run(() => writer.WriteFilesContinuously(cts.Token));
 
@@ -34,5 +35,7 @@ int exitCode = await parseResult.InvokeAsync(null, cts.Token);
 writer.Shutdown();
 
 await writerBgTask;
+
+report.LogReport();
 
 return exitCode;

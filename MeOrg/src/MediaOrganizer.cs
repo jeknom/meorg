@@ -19,12 +19,14 @@ public class MediaOrganizer : IMediaOrganizer
 {
     private readonly ParallelOptions _parallelOptions;
     private readonly ILogger<MediaOrganizer> _logger;
+    private readonly RunReport _report;
     private readonly IBackgroundFileWriter _writer;
     private readonly IDuplicateFileDetector _duplicateDetector;
 
     public MediaOrganizer(
         IBackgroundFileWriter writer,
         ILogger<MediaOrganizer> logger,
+        RunReport report,
         CancellationToken cancellationToken)
     {
         _parallelOptions = new()
@@ -34,6 +36,7 @@ public class MediaOrganizer : IMediaOrganizer
         };
         _duplicateDetector = new DuplicateFileDetector();
         _logger = logger;
+        _report = report;
         _writer = writer;
     }
 
@@ -59,7 +62,16 @@ public class MediaOrganizer : IMediaOrganizer
 
         if (!skipDedupe)
         {
-            filesPaths = filesPaths.Where(_duplicateDetector.TrySetFileSeen);
+            filesPaths = filesPaths.Where((path) =>
+            {
+                bool isUnique = _duplicateDetector.TrySetFileSeen(path);
+                if (!isUnique)
+                {
+                    _report.ReportDuplicateDetected();
+                }
+
+                return isUnique;
+            });
         }
 
         await Parallel.ForEachAsync(
@@ -119,7 +131,7 @@ public class MediaOrganizer : IMediaOrganizer
                 return true;
             }
 
-            _logger.LogWarning("Could not parse creation date for file '{path}'", path);
+            _report.ReportUndeterminedCreationDate();
         }
         catch (ImageProcessingException processingException)
         {
