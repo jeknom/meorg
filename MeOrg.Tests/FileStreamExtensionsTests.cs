@@ -9,10 +9,10 @@ public class FileStreamExtensionsTests
     [Fact]
     public void Generated_Hash_Matches_On_Duplicate_File_Contents()
     {
-        FileStream aStream = File.Open(Path.Combine(_testFilesBase, "duplicate-a.jpg"), FileMode.Open);
+        using FileStream aStream = File.Open(Path.Combine(_testFilesBase, "duplicate-a.jpg"), FileMode.Open);
         string aHash = aStream.GenerateSampledHash();
 
-        FileStream bStream = File.Open(Path.Combine(_testFilesBase, "duplicate-b.jpg"), FileMode.Open);
+        using FileStream bStream = File.Open(Path.Combine(_testFilesBase, "duplicate-b.jpg"), FileMode.Open);
         string bHash = bStream.GenerateSampledHash();
 
         Assert.Equal(aHash, bHash);
@@ -21,10 +21,10 @@ public class FileStreamExtensionsTests
     [Fact]
     public void Generated_Hash_Mismatch_On_Differing_File_Contents()
     {
-        FileStream aStream = File.Open(Path.Combine(_testFilesBase, "unique-a.png"), FileMode.Open);
+        using FileStream aStream = File.Open(Path.Combine(_testFilesBase, "unique-a.png"), FileMode.Open);
         string aHash = aStream.GenerateSampledHash();
 
-        FileStream bStream = File.Open(Path.Combine(_testFilesBase, "unique-b.png"), FileMode.Open);
+        using FileStream bStream = File.Open(Path.Combine(_testFilesBase, "unique-b.png"), FileMode.Open);
         string bHash = bStream.GenerateSampledHash();
 
         Assert.NotEqual(aHash, bHash);

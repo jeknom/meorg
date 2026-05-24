@@ -16,6 +16,7 @@ public class MediaOrganizer : IMediaOrganizer
     private readonly ParallelOptions _parallelOptions;
     private readonly ILogger<MediaOrganizer> _logger;
     private readonly IBackgroundFileWriter _writer;
+    private readonly IDuplicateFileDetector _duplicateDetector;
 
     public MediaOrganizer(
         IBackgroundFileWriter writer,
@@ -27,6 +28,7 @@ public class MediaOrganizer : IMediaOrganizer
             MaxDegreeOfParallelism = Environment.ProcessorCount,
             CancellationToken = cancellationToken
         };
+        _duplicateDetector = new DuplicateFileDetector();
         _logger = logger;
         _writer = writer;
     }
@@ -36,17 +38,28 @@ public class MediaOrganizer : IMediaOrganizer
         DirectoryInfo target,
         CancellationToken cancellationToken)
     {
+        foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
+        {
+            if (!IsSupportedExtension(targetPath))
+            {
+                continue;
+            }
+
+            _duplicateDetector.TrySetFileSeen(targetPath);
+        }
+
         var filesPaths = System.IO.Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
-            .Where(IsSupportedExtension);
+            .Where(IsSupportedExtension)
+            .Where(_duplicateDetector.TrySetFileSeen);
 
         await Parallel.ForEachAsync(
             filesPaths,
             _parallelOptions,
-            (path, ct) => DetermineTargetPathAndPublish(path, target, ct));
+            (path, ct) => OrganizeFile(path, target, ct));
     }
 
-    private async ValueTask DetermineTargetPathAndPublish(
+    private async ValueTask OrganizeFile(
         string path,
         DirectoryInfo target,
         CancellationToken cancellationToken)

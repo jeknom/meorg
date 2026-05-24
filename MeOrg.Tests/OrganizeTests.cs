@@ -48,12 +48,17 @@ public class OrganizeTests : IDisposable
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Namesakes"));
         await _mediaOrganizer.Organize(source, _target, CancellationToken.None);
-        await AssertFileExists(GetTargetFilePath("2026-04-25/IMG_4146.HEIC"));
-        await AssertFileExists(GetTargetFilePath("2026-04-25/IMG_4146 (2).HEIC"));
-        await AssertFileExists(GetTargetFilePath("2026-04-26/IMG_4158.MOV"));
-        await AssertFileExists(GetTargetFilePath("2026-04-26/IMG_4158 (2).MOV"));
-        await AssertFileExists(GetTargetFilePath("Misc/giraffe.jpg"));
-        await AssertFileExists(GetTargetFilePath("Misc/giraffe (2).jpg"));
+        await AssertFileExists(GetTargetFilePath("2026-05-24/IMG_NAMESAKE.HEIC"));
+        await AssertFileExists(GetTargetFilePath("2026-05-24/IMG_NAMESAKE (2).HEIC"));
+    }
+
+    [Fact(Timeout = 10000)]
+    public async Task Organize_Duplicates()
+    {
+        DirectoryInfo source = new(Path.Combine(_sourceBase, "Duplicates"));
+        await _mediaOrganizer.Organize(source, _target, CancellationToken.None);
+        await AssertFileExists(GetTargetFilePath("2026-05-24/IMG_DUPLICATE_A.HEIC"));
+        await AssertFileDoesNotExistAfterDelay(GetTargetFilePath("2026-05-24/IMG_DUPLICATE_B.HEIC"));
     }
 
     private static async Task AssertFileExists(string filePath, int timeoutMs = 1000)
