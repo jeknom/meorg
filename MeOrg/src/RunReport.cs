@@ -6,7 +6,7 @@ public class RunReport
 {
     private readonly ILogger<RunReport> _logger;
     private int _duplicateCount = 0;
-    private int _undeterminedCreationDate = 0;
+    private int _unreliableCreationDateCount = 0;
     private int _copyCount = 0;
 
     public RunReport(ILogger<RunReport> logger)
@@ -24,18 +24,18 @@ public class RunReport
         _duplicateCount++;
     }
 
-    public void ReportUndeterminedCreationDate()
+    public void ReportUnreliableCreationDate()
     {
-        _undeterminedCreationDate++;
+        _unreliableCreationDateCount++;
     }
 
     public void LogReport()
     {
         using (_logger.BeginScope("Organize report:"))
         {
-            _logger.LogInformation("Organized '{copyCount}' media files into target directory", _copyCount);
-            _logger.LogInformation("Detected '{duplicateCount}' duplicates.", _duplicateCount);
-            _logger.LogInformation("Failed to determine creation time for '{undeterminedCount}' media files", _undeterminedCreationDate);
+            _logger.LogInformation("Organized files: '{copyCount}'", _copyCount);
+            _logger.LogInformation("Detected duplicates: '{duplicateCount}'", _duplicateCount);
+            _logger.LogInformation("Unrealiable creation date (non-exif): '{undeterminedCount}'", _unreliableCreationDateCount);
         }
     }
 }

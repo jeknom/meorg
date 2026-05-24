@@ -32,9 +32,9 @@ public class OrganizeTests : IDisposable
         await _mediaOrganizer.Organize(source, _target, skipDedupe: false, CancellationToken.None);
         await AssertFileExists(GetTargetFilePath("2026-04-25/IMG_4146.HEIC"));
         await AssertFileExists(GetTargetFilePath("2026-04-26/IMG_4158.MOV"));
-        await AssertFileExists(GetTargetFilePath("Misc/butterfly.webp"));
-        await AssertFileExists(GetTargetFilePath("Misc/giraffe.jpg"));
-        await AssertFileExists(GetTargetFilePath("Misc/jumble.png"));
+        await AssertFileExists(GetTargetFilePath("2026-04-26/butterfly.webp"));
+        await AssertFileExists(GetTargetFilePath("2026-04-26/giraffe.jpg"));
+        await AssertFileExists(GetTargetFilePath("2026-04-26/jumble.png"));
     }
 
     [Fact]

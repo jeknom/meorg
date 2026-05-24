@@ -131,7 +131,13 @@ public class MediaOrganizer : IMediaOrganizer
                 return true;
             }
 
-            _report.ReportUndeterminedCreationDate();
+            createdDateTime = File.GetCreationTime(path);
+            if (createdDateTime != default)
+            {
+                _report.ReportUnreliableCreationDate();
+                return true;
+            }
+
         }
         catch (ImageProcessingException processingException)
         {
