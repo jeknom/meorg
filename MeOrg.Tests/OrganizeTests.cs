@@ -30,11 +30,11 @@ public class OrganizeTests : IDisposable
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "SupportedFiles"));
         await _mediaOrganizer.Organize(source, _target, skipDedupe: false, CancellationToken.None);
-        await AssertFileExists(GetTargetFilePath("2026-04-25/IMG_4146.HEIC"));
-        await AssertFileExists(GetTargetFilePath("2026-04-26/IMG_4158.MOV"));
-        await AssertFileExists(GetTargetFilePath("2026-04-26/butterfly.webp"));
-        await AssertFileExists(GetTargetFilePath("2026-04-26/giraffe.jpg"));
-        await AssertFileExists(GetTargetFilePath("2026-04-26/jumble.png"));
+        await AssertFileExists(GetTargetPath("2026-04-25/IMG_4146.HEIC"));
+        await AssertFileExists(GetTargetPath("2026-04-26/IMG_4158.MOV"));
+        await AssertFileExists(GetTargetPath("2026-04-26/butterfly.webp"));
+        await AssertFileExists(GetTargetPath("2026-04-26/giraffe.jpg"));
+        await AssertFileExists(GetTargetPath("2026-04-26/jumble.png"));
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class OrganizeTests : IDisposable
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "UnsupportedFiles"));
         await _mediaOrganizer.Organize(source, _target, skipDedupe: false, CancellationToken.None);
-        await AssertFileDoesNotExistAfterDelay(GetTargetFilePath("Misc/some.txt"));
+        await AssertFileDoesNotExistAfterDelay(GetTargetPath("Misc/some.txt"));
     }
 
     [Fact(Timeout = 10000)]
@@ -50,8 +50,8 @@ public class OrganizeTests : IDisposable
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Namesakes"));
         await _mediaOrganizer.Organize(source, _target, skipDedupe: false, CancellationToken.None);
-        await AssertFileExists(GetTargetFilePath("2026-05-24/IMG_NAMESAKE.HEIC"));
-        await AssertFileExists(GetTargetFilePath("2026-05-24/IMG_NAMESAKE (2).HEIC"));
+        await AssertFileExists(GetTargetPath("2026-05-24/IMG_NAMESAKE.HEIC"));
+        await AssertFileExists(GetTargetPath("2026-05-24/IMG_NAMESAKE (2).HEIC"));
     }
 
     [Fact(Timeout = 10000)]
@@ -59,8 +59,17 @@ public class OrganizeTests : IDisposable
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Duplicates"));
         await _mediaOrganizer.Organize(source, _target, skipDedupe: false, CancellationToken.None);
-        await AssertFileExists(GetTargetFilePath("2026-05-24/IMG_DUPLICATE_A.HEIC"));
-        await AssertFileDoesNotExistAfterDelay(GetTargetFilePath("2026-05-24/IMG_DUPLICATE_B.HEIC"));
+        await AssertFileExists(GetTargetPath("2026-05-24/IMG_DUPLICATE_A.HEIC"));
+        await AssertFileDoesNotExistAfterDelay(GetTargetPath("2026-05-24/IMG_DUPLICATE_B.HEIC"));
+    }
+
+    [Fact(Timeout = 10000)]
+    public async Task Organize_Supports_Directory_Suffix_In_Existing_Target()
+    {
+        DirectoryInfo source = new(Path.Combine(_sourceBase, "TargetExistsWithSuffix"));
+        Directory.CreateDirectory(GetTargetPath("2026-05-17 test suffix"));
+        await _mediaOrganizer.Organize(source, _target, skipDedupe: false, CancellationToken.None);
+        await AssertFileExists(GetTargetPath("2026-05-17 test suffix/giraffe.jpg"));
     }
 
     private static async Task AssertFileExists(string filePath, int timeoutMs = 1000)
@@ -93,7 +102,7 @@ public class OrganizeTests : IDisposable
         }
     }
 
-    private string GetTargetFilePath(string relativePath)
+    private string GetTargetPath(string relativePath)
     {
         string path = Path.Combine(_target.FullName, relativePath);
         return path;

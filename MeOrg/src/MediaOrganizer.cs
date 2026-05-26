@@ -22,6 +22,7 @@ public class MediaOrganizer : IMediaOrganizer
     private readonly RunReport _report;
     private readonly IBackgroundFileWriter _writer;
     private readonly IDuplicateFileDetector _duplicateDetector;
+    private readonly Dictionary<string, string> _suffixedTargetDirectoryLookup;
 
     public MediaOrganizer(
         IBackgroundFileWriter writer,
@@ -35,6 +36,7 @@ public class MediaOrganizer : IMediaOrganizer
             CancellationToken = cancellationToken
         };
         _duplicateDetector = new DuplicateFileDetector();
+        _suffixedTargetDirectoryLookup = new();
         _logger = logger;
         _report = report;
         _writer = writer;
@@ -46,7 +48,17 @@ public class MediaOrganizer : IMediaOrganizer
         bool skipDedupe,
         CancellationToken cancellationToken)
     {
-        foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
+        foreach (string subDir in System.IO.Directory.EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly))
+        {
+            string directoryName = Path.GetFileName(subDir);
+            if (directoryName.Length >= 10 && DateOnly.TryParseExact(directoryName[..10], "yyyy-MM-dd", out _))
+            {
+                string prefix = directoryName[..10];
+                _suffixedTargetDirectoryLookup.TryAdd(prefix, directoryName);
+            }
+        }
+
+        foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName))
         {
             if (!IsSupportedExtension(targetPath))
             {
@@ -90,6 +102,11 @@ public class MediaOrganizer : IMediaOrganizer
         if (TryExtractCreationTime(path, out DateTime creationDateTime))
         {
             subDirName = creationDateTime.ToMeorgDateString();
+        }
+
+        if (_suffixedTargetDirectoryLookup.TryGetValue(subDirName, out string? suffixedSubDirName))
+        {
+            subDirName = suffixedSubDirName;
         }
 
         string fileName = Path.GetFileName(path);
