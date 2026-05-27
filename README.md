@@ -2,7 +2,6 @@
 
 ## Todo
 
-- Investigate if deduping and reports work as expected
 - Log steps so terminal does not feel frozen
 - Implement optional flag for time window where images taken during the night (default until 4AM) still get grouped to previous day's folder
 - Plan first, confirm with user before organizing

@@ -38,6 +38,9 @@ public class BackgroundFileWriter : IBackgroundFileWriter
                 if (!File.Exists(to))
                 {
                     File.Copy(from, to);
+
+                    _report.ReportFileCopied();
+
                     continue;
                 }
 

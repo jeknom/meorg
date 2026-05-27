@@ -16,17 +16,17 @@ public class RunReport
 
     public void ReportFileCopied()
     {
-        _copyCount++;
+        Interlocked.Increment(ref _copyCount);
     }
 
     public void ReportDuplicateDetected()
     {
-        _duplicateCount++;
+        Interlocked.Increment(ref _duplicateCount);
     }
 
     public void ReportUnreliableCreationDate()
     {
-        _unreliableCreationDateCount++;
+        Interlocked.Increment(ref _unreliableCreationDateCount);
     }
 
     public void LogReport()
@@ -35,7 +35,7 @@ public class RunReport
         {
             _logger.LogInformation("Organized files: '{copyCount}'", _copyCount);
             _logger.LogInformation("Detected duplicates: '{duplicateCount}'", _duplicateCount);
-            _logger.LogInformation("Unrealiable creation date (non-exif): '{undeterminedCount}'", _unreliableCreationDateCount);
+            _logger.LogInformation("Unreliable creation date (non-exif): '{undeterminedCount}'", _unreliableCreationDateCount);
         }
     }
 }

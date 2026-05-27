@@ -48,6 +48,7 @@ public class MediaOrganizer : IMediaOrganizer
         bool skipDedupe,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Start organizing files. From '{source}' to '{target}'. Dedupe enabled: '{skipDedupe}'", source.FullName, target.FullName, !skipDedupe);
         foreach (string subDir in System.IO.Directory.EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly))
         {
             string directoryName = Path.GetFileName(subDir);
@@ -58,7 +59,7 @@ public class MediaOrganizer : IMediaOrganizer
             }
         }
 
-        foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName))
+        foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
         {
             if (!IsSupportedExtension(targetPath))
             {
