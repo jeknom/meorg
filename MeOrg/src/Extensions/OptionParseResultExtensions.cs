@@ -4,18 +4,18 @@ using System.CommandLine.Parsing;
 
 public static class OptionParseResultExtensions
 {
-    public static void IsDirectoryPathWithReadPermissions(this OptionResult result)
+    public static void IsDirectoryPathWithReadPermissions(this OptionResult result, string kind)
     {
         if (result.Tokens.Count == 0)
         {
-            result.AddError("Source directory path not specified");
+            result.AddError($"'{kind}' directory path not specified");
             return;
         }
 
         string dirPath = result.Tokens.Single().Value;
         if (!Directory.Exists(dirPath))
         {
-            result.AddError($"Source directory '{dirPath}' does not exist");
+            result.AddError($"'{kind}' directory '{dirPath}' does not exist");
             return;
         }
 
@@ -25,22 +25,22 @@ public static class OptionParseResultExtensions
         }
         catch (UnauthorizedAccessException)
         {
-            result.AddError($"No read permission for directory '{dirPath}'");
+            result.AddError($"No read permission for '{kind}' directory '{dirPath}'");
         }
     }
 
-    public static void IsDirectoryPathWithWritePermissions(this OptionResult result)
+    public static void IsDirectoryPathWithWritePermissions(this OptionResult result, string kind)
     {
         if (result.Tokens.Count == 0)
         {
-            result.AddError("Source directory path not specified");
+            result.AddError($"'{kind}' directory path not specified");
             return;
         }
 
         string dirPath = result.Tokens.Single().Value;
         if (!Directory.Exists(dirPath))
         {
-            result.AddError($"Source directory '{dirPath}' does not exist");
+            result.AddError($"'{kind}' directory '{dirPath}' does not exist");
             return;
         }
 
@@ -52,7 +52,7 @@ public static class OptionParseResultExtensions
         }
         catch (UnauthorizedAccessException)
         {
-            result.AddError($"No write permission for directory '{dirPath}'");
+            result.AddError($"No write permission for '{kind}' directory '{dirPath}'");
         }
     }
 }

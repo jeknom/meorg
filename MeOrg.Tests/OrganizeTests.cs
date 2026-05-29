@@ -1,4 +1,5 @@
-﻿using Xunit.Abstractions;
+﻿using System.Diagnostics;
+using Xunit.Abstractions;
 
 namespace MeOrg.Tests;
 
@@ -10,12 +11,14 @@ public class OrganizeTests : IDisposable
     private readonly CancellationTokenSource _cts = new CancellationTokenSource();
     private readonly string _sourceBase = new(Path.Combine(AppContext.BaseDirectory, "TestFiles/Scenarios"));
     private readonly DirectoryInfo _target = Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "TestTarget", Guid.NewGuid().ToString()));
+    private readonly Stopwatch _stopwatch = new Stopwatch();
 
     public OrganizeTests(ITestOutputHelper output)
     {
-        _report = new RunReport(new XUnitLogger<RunReport>(output));
+        _stopwatch.Start();
+        _report = new RunReport(_stopwatch, new XUnitLogger<RunReport>(output));
         _writer = new BackgroundFileWriter(_report, new XUnitLogger<BackgroundFileWriter>(output));
-        _mediaOrganizer = new MediaOrganizer(_writer, new XUnitLogger<MediaOrganizer>(output), _report, _cts.Token);
+        _mediaOrganizer = new MediaOrganizer(_writer, new XUnitLogger<MediaOrganizer>(output), _report, _stopwatch, _cts.Token);
         Task.Run(() => _writer.WriteFilesContinuously(_cts.Token));
     }
 
@@ -23,6 +26,8 @@ public class OrganizeTests : IDisposable
     {
         _writer.Shutdown();
         _cts.Cancel();
+        _report.LogReport();
+        _stopwatch.Stop();
     }
 
     [Fact]

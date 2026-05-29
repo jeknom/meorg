@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace MeOrg;
@@ -8,9 +9,11 @@ public class RunReport
     private int _duplicateCount = 0;
     private int _unreliableCreationDateCount = 0;
     private int _copyCount = 0;
+    private readonly Stopwatch _stopwatch;
 
-    public RunReport(ILogger<RunReport> logger)
+    public RunReport(Stopwatch stopwatch, ILogger<RunReport> logger)
     {
+        _stopwatch = stopwatch;
         _logger = logger;
     }
 
@@ -33,9 +36,7 @@ public class RunReport
     {
         using (_logger.BeginScope("Organize report:"))
         {
-            _logger.LogInformation("Organized files: '{copyCount}'", _copyCount);
-            _logger.LogInformation("Detected duplicates: '{duplicateCount}'", _duplicateCount);
-            _logger.LogInformation("Unreliable creation date (non-exif): '{undeterminedCount}'", _unreliableCreationDateCount);
+            _logger.LogInformation("Organized files:\t\t'{copyCount}'\nDetected duplicates:\t'{duplicateCount}'\nNon-exif creation date:\t'{undeterminedCount}'\nSeconds elapsed:\t\t'{secs}'", _copyCount, _duplicateCount, _unreliableCreationDateCount, _stopwatch.Elapsed.TotalSeconds);
         }
     }
 }

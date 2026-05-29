@@ -3,6 +3,7 @@ using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.QuickTime;
 using Microsoft.Extensions.Logging;
 using MeOrg.Extensions;
+using System.Diagnostics;
 
 namespace MeOrg;
 
@@ -21,6 +22,7 @@ public class MediaOrganizer : IMediaOrganizer
     private readonly ParallelOptions _parallelOptions;
     private readonly ILogger<MediaOrganizer> _logger;
     private readonly RunReport _report;
+    private readonly Stopwatch _stopwatch;
     private readonly IBackgroundFileWriter _writer;
     private readonly IDuplicateFileDetector _duplicateDetector;
     private readonly Dictionary<string, string> _suffixedTargetDirectoryLookup;
@@ -29,6 +31,7 @@ public class MediaOrganizer : IMediaOrganizer
         IBackgroundFileWriter writer,
         ILogger<MediaOrganizer> logger,
         RunReport report,
+        Stopwatch stopwatch,
         CancellationToken cancellationToken)
     {
         _parallelOptions = new()
@@ -40,6 +43,7 @@ public class MediaOrganizer : IMediaOrganizer
         _suffixedTargetDirectoryLookup = new();
         _logger = logger;
         _report = report;
+        _stopwatch = stopwatch;
         _writer = writer;
     }
 
@@ -50,7 +54,8 @@ public class MediaOrganizer : IMediaOrganizer
         bool skipDedupe,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Start organizing files. From '{source}' to '{target}'. Dedupe enabled: '{skipDedupe}'", source.FullName, target.FullName, !skipDedupe);
+        _logger.LogInformation("Start organizing files. From '{source}' to '{target}'. Dedupe enabled: '{skipDedupe}'. Day hours offset: '{dayOffset}'.", source.FullName, target.FullName, !skipDedupe, dayOffset.Hours);
+
         foreach (string subDir in System.IO.Directory.EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly))
         {
             string directoryName = Path.GetFileName(subDir);
@@ -61,15 +66,7 @@ public class MediaOrganizer : IMediaOrganizer
             }
         }
 
-        foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
-        {
-            if (!IsSupportedExtension(targetPath))
-            {
-                continue;
-            }
-
-            _duplicateDetector.TrySetFileSeen(targetPath);
-        }
+        _logger.LogInformation("Lookup for existing target directories has been created. There are '{existingCount}' existing directories. (Elapsed seconds: {secs})", _suffixedTargetDirectoryLookup.Count, _stopwatch.Elapsed.TotalSeconds);
 
         IEnumerable<string> filesPaths = System.IO.Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
@@ -77,6 +74,18 @@ public class MediaOrganizer : IMediaOrganizer
 
         if (!skipDedupe)
         {
+            foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
+            {
+                if (!IsSupportedExtension(targetPath))
+                {
+                    continue;
+                }
+
+                _duplicateDetector.TrySetFileSeen(targetPath);
+            }
+
+            _logger.LogInformation("Hash generation for existing target media completed. There are {targetMediaCount} media files in the target directory. (Elapsed seconds: {secs})", _duplicateDetector.SeenCount, _stopwatch.Elapsed.TotalSeconds);
+
             filesPaths = filesPaths.Where((path) =>
             {
                 bool isUnique = _duplicateDetector.TrySetFileSeen(path);
@@ -93,6 +102,8 @@ public class MediaOrganizer : IMediaOrganizer
             filesPaths,
             _parallelOptions,
             (path, ct) => OrganizeFile(path, target, dayOffset, ct));
+
+        _logger.LogInformation("All files have been handed over to background writer. (Elapsed seconds: {secs})", _stopwatch.Elapsed.TotalSeconds);
     }
 
     private async ValueTask OrganizeFile(

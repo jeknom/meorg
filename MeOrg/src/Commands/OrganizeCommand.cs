@@ -19,7 +19,7 @@ public class OrganizeCommand : Command
             Required = true
         };
 
-        sourceDirOption.Validators.Add(result => result.IsDirectoryPathWithReadPermissions());
+        sourceDirOption.Validators.Add(result => result.IsDirectoryPathWithReadPermissions("source"));
         Options.Add(sourceDirOption);
 
         Option<DirectoryInfo> targetDirOption = new("--target")
@@ -27,7 +27,7 @@ public class OrganizeCommand : Command
             Description = "Directory where to copy your organized media.",
             Required = true
         };
-        targetDirOption.Validators.Add(result => result.IsDirectoryPathWithWritePermissions());
+        targetDirOption.Validators.Add(result => result.IsDirectoryPathWithWritePermissions("target"));
         Options.Add(targetDirOption);
 
         Option<bool> skipDedupe = new("--skip-dedupe")

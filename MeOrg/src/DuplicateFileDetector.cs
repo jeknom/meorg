@@ -5,11 +5,14 @@ namespace MeOrg;
 interface IDuplicateFileDetector
 {
     bool TrySetFileSeen(string path);
+    int SeenCount { get; }
 }
 
 public class DuplicateFileDetector : IDuplicateFileDetector
 {
     private readonly HashSet<string> _seen = new();
+
+    public int SeenCount => _seen.Count;
 
     public bool TrySetFileSeen(string path)
     {
