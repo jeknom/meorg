@@ -36,9 +36,26 @@ public class OrganizeCommand : Command
             Required = false
         };
 
+        Option<int> dayOffsetHours = new("--day-offset-hours")
+        {
+            Description = "Groups media to previous day's directory within the given offset. Defaults to `4`.",
+            Required = false,
+            DefaultValueFactory = _ => 4,
+        };
+
+        dayOffsetHours.Validators.Add((result) =>
+        {
+            int value = result.GetValueOrDefault<int>();
+            if (value < 0)
+            {
+                result.AddError($"--day-offset-hours must be >= 0, got {value}.");
+            }
+        });
+
         SetAction((parseResult, ct) => OrganizeAction(
             sourceDir: parseResult.GetValue(sourceDirOption)!,
             targetDir: parseResult.GetValue(targetDirOption)!,
+            dayOffsetHours: parseResult.GetValue(dayOffsetHours),
             skipDedupe: parseResult.GetValue(skipDedupe),
             cancellationToken: ct));
     }
@@ -46,9 +63,15 @@ public class OrganizeCommand : Command
     private async Task OrganizeAction(
         DirectoryInfo sourceDir,
         DirectoryInfo targetDir,
+        int dayOffsetHours,
         bool skipDedupe,
         CancellationToken cancellationToken)
     {
-        await _organizer.Organize(sourceDir, targetDir, skipDedupe, cancellationToken);
+        await _organizer.Organize(
+            sourceDir,
+            targetDir,
+            dayOffset: TimeSpan.FromHours(dayOffsetHours),
+            skipDedupe,
+            cancellationToken);
     }
 }

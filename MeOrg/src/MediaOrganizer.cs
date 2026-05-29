@@ -11,6 +11,7 @@ public interface IMediaOrganizer
     Task Organize(
         DirectoryInfo source,
         DirectoryInfo target,
+        TimeSpan dayOffset,
         bool skipDedupe,
         CancellationToken cancellationToken);
 }
@@ -45,6 +46,7 @@ public class MediaOrganizer : IMediaOrganizer
     public async Task Organize(
         DirectoryInfo source,
         DirectoryInfo target,
+        TimeSpan dayOffset,
         bool skipDedupe,
         CancellationToken cancellationToken)
     {
@@ -90,18 +92,25 @@ public class MediaOrganizer : IMediaOrganizer
         await Parallel.ForEachAsync(
             filesPaths,
             _parallelOptions,
-            (path, ct) => OrganizeFile(path, target, ct));
+            (path, ct) => OrganizeFile(path, target, dayOffset, ct));
     }
 
     private async ValueTask OrganizeFile(
         string path,
         DirectoryInfo target,
+        TimeSpan dayOffset,
         CancellationToken cancellationToken)
     {
         string subDirName = Constants.DEFAULT_SUBDIR_NAME;
 
         if (TryExtractCreationTime(path, out DateTime creationDateTime))
         {
+            DateTime withOffset = creationDateTime - dayOffset;
+            if (creationDateTime.Day != withOffset.Day)
+            {
+                creationDateTime = withOffset;
+            }
+
             subDirName = creationDateTime.ToMeorgDateString();
         }
 
