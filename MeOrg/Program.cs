@@ -36,6 +36,9 @@ writer.Shutdown();
 
 await writerBgTask;
 
-report.LogReport();
+if (args.Length > 1 && args[1] == "organize")
+{
+    report.LogReport();
+}
 
 return exitCode;

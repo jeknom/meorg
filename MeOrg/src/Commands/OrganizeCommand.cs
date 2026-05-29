@@ -32,17 +32,18 @@ public class OrganizeCommand : Command
 
         Option<bool> skipDedupe = new("--skip-dedupe")
         {
-            Description = "Disables duplicate detection. Defaults to `false`.",
-            Required = false
+            Description = "Disables duplicate detection.",
+            Required = false,
+            DefaultValueFactory = _ => false
         };
+        Options.Add(skipDedupe);
 
         Option<int> dayOffsetHours = new("--day-offset-hours")
         {
-            Description = "Groups media to previous day's directory within the given offset. Defaults to `4`.",
+            Description = "Number of hours past midnight that still count as the previous day. With the default of 4, a photo taken at 3AM is filed under the previous day's directory instead of the current one.",
             Required = false,
             DefaultValueFactory = _ => 4,
         };
-
         dayOffsetHours.Validators.Add((result) =>
         {
             int value = result.GetValueOrDefault<int>();
@@ -51,6 +52,7 @@ public class OrganizeCommand : Command
                 result.AddError($"--day-offset-hours must be >= 0, got {value}.");
             }
         });
+        Options.Add(dayOffsetHours);
 
         SetAction((parseResult, ct) => OrganizeAction(
             sourceDir: parseResult.GetValue(sourceDirOption)!,
