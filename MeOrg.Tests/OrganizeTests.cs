@@ -26,7 +26,6 @@ public class OrganizeTests : IDisposable
 
     public void Dispose()
     {
-        _writer.Shutdown();
         _cts.Cancel();
         _stopwatch.Stop();
     }

@@ -63,19 +63,16 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 
     public async Task<bool> TryAddFile(string fromPath, string toPath, CancellationToken cancellationToken)
     {
-        if (!await _fileChannel.Writer.WaitToWriteAsync(cancellationToken))
+        try
+        {
+            await _fileChannel.Writer.WriteAsync((fromPath, toPath), cancellationToken);
+            return true;
+        }
+        catch (ChannelClosedException)
         {
             _console.WriteErrorLine($"Failed to write to channel for paths: from '{fromPath}' to '{toPath}'. The file channel has likely been completed already.");
             return false;
         }
-
-        if (!_fileChannel.Writer.TryWrite((fromPath, toPath)))
-        {
-            _console.WriteErrorLine($"Failed to write file from '{fromPath}' to '{toPath}'.");
-            return false;
-        }
-
-        return true;
     }
 
     public void Shutdown()
