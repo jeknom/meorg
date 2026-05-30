@@ -13,6 +13,7 @@ public interface IMediaOrganizer
         DirectoryInfo target,
         TimeSpan dayOffset,
         bool skipDedupe,
+        bool showPlanPrompt,
         CancellationToken cancellationToken);
 }
 
@@ -49,11 +50,13 @@ public class MediaOrganizer : IMediaOrganizer
         DirectoryInfo target,
         TimeSpan dayOffset,
         bool skipDedupe,
+        bool showPlanPrompt,
         CancellationToken cancellationToken)
     {
         _metrics.ReportStarted();
 
         _stopwatch.Start();
+        _console.WriteInfoLine("Populating pre-existing target directory lookup...");
 
         foreach (string subDir in System.IO.Directory.EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly))
         {
@@ -75,6 +78,8 @@ public class MediaOrganizer : IMediaOrganizer
 
         if (!skipDedupe)
         {
+            _console.WriteInfoLine("Generating hashes for existing target media...");
+
             foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
             {
                 if (!IsSupportedExtension(targetPath))
@@ -86,6 +91,8 @@ public class MediaOrganizer : IMediaOrganizer
             }
 
             _metrics.ReportPreExistingTargetMediaHashGenerationTime(_stopwatch.Elapsed, _duplicateDetector.SeenCount);
+
+            _console.WriteInfoLine("Filtering duplicate source media...");
 
             filesPaths = filesPaths.Where((path) =>
             {
@@ -101,6 +108,22 @@ public class MediaOrganizer : IMediaOrganizer
 
         _stopwatch.Restart();
 
+        if (showPlanPrompt)
+        {
+            filesPaths = filesPaths.ToList();
+            if (filesPaths.Count() > 0)
+            {
+                bool shouldContinue = await _console.Confirm($"This operation will copy '{filesPaths.Count()}' files to target directory. Continue?", cancellationToken);
+                if (!shouldContinue)
+                {
+                    _console.WriteInfoLine("Organize canceled, have a nice day!");
+                    return;
+                }
+            }
+        }
+
+
+        _console.WriteInfoLine("Copying files...");
         await Parallel.ForEachAsync(
             filesPaths,
             _parallelOptions,
@@ -108,6 +131,7 @@ public class MediaOrganizer : IMediaOrganizer
 
         _metrics.ReportSourceFileProcessingTime(_stopwatch.Elapsed);
 
+        _console.WriteInfoLine("Wrapping up...");
         _stopwatch.Stop();
     }
 

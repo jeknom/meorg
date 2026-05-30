@@ -6,12 +6,14 @@ namespace MeOrg.Commands;
 public class OrganizeCommand : Command
 {
     private readonly IMediaOrganizer _organizer;
+    private readonly ISpectreConsole _console;
 
-    public OrganizeCommand(IMediaOrganizer organizer) : base(
+    public OrganizeCommand(IMediaOrganizer organizer, ISpectreConsole console) : base(
         "organize",
         "Used to organize media from an unorganized source directory into target directory.")
     {
         _organizer = organizer;
+        _console = console;
 
         Option<DirectoryInfo> sourceDirOption = new("--source")
         {
@@ -54,11 +56,20 @@ public class OrganizeCommand : Command
         });
         Options.Add(dayOffsetHours);
 
-        SetAction((parseResult, ct) => OrganizeAction(
+        Option<bool> yesToAll = new("--y")
+        {
+            Description = "Answer yes to all prompts automatically",
+            Required = false,
+            DefaultValueFactory = _ => false
+        };
+        Options.Add(yesToAll);
+
+        SetAction(async (parseResult, ct) => await OrganizeAction(
             sourceDir: parseResult.GetValue(sourceDirOption)!,
             targetDir: parseResult.GetValue(targetDirOption)!,
             dayOffsetHours: parseResult.GetValue(dayOffsetHours),
             skipDedupe: parseResult.GetValue(skipDedupe),
+            yesToAll: parseResult.GetValue(yesToAll),
             cancellationToken: ct));
     }
 
@@ -67,13 +78,17 @@ public class OrganizeCommand : Command
         DirectoryInfo targetDir,
         int dayOffsetHours,
         bool skipDedupe,
+        bool yesToAll,
         CancellationToken cancellationToken)
     {
+        _console.WriteInputs(sourceDir.FullName, targetDir.FullName, dayOffsetHours, dedupe: !skipDedupe, yesToAll);
+
         await _organizer.Organize(
             sourceDir,
             targetDir,
             dayOffset: TimeSpan.FromHours(dayOffsetHours),
             skipDedupe,
+            showPlanPrompt: !yesToAll,
             cancellationToken);
     }
 }

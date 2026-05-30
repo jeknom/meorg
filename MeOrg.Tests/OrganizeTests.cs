@@ -35,7 +35,7 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Supported_Files()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "SupportedFiles"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-04-25/IMG_4146.HEIC"));
         await AssertFileExists(GetTargetPath("2026-04-26/IMG_4158.MOV"));
         await AssertFileExists(GetTargetPath("2026-04-26/butterfly.webp"));
@@ -47,7 +47,7 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Does_Not_Copy_Unsupported_Files()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "UnsupportedFiles"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
         await AssertFileDoesNotExistAfterDelay(GetTargetPath("Misc/some.txt"));
     }
 
@@ -55,7 +55,7 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Namesakes()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Namesakes"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-24/IMG_NAMESAKE.HEIC"));
         await AssertFileExists(GetTargetPath("2026-05-24/IMG_NAMESAKE (2).HEIC"));
     }
@@ -64,7 +64,7 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Duplicates()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Duplicates"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-24/IMG_DUPLICATE_A.HEIC"));
         await AssertFileDoesNotExistAfterDelay(GetTargetPath("2026-05-24/IMG_DUPLICATE_B.HEIC"));
     }
@@ -74,7 +74,7 @@ public class OrganizeTests : IDisposable
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "TargetExistsWithSuffix"));
         Directory.CreateDirectory(GetTargetPath("2026-05-17 test suffix"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero, skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-17 test suffix/giraffe.jpg"));
     }
 
@@ -82,9 +82,9 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Respects_Day_Offset()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "RespectDayOffset"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(12), skipDedupe: false, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(12), skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-24/TAKEN_AT_12_22.HEIC"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(13), skipDedupe: true, CancellationToken.None);
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(13), skipDedupe: true, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-23/TAKEN_AT_12_22.HEIC"));
     }
 

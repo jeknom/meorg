@@ -1,5 +1,4 @@
 using System.Threading.Channels;
-using Spectre.Console;
 
 namespace MeOrg;
 
@@ -65,13 +64,13 @@ public class BackgroundFileWriter : IBackgroundFileWriter
     {
         if (!await _fileChannel.Writer.WaitToWriteAsync(cancellationToken))
         {
-            _console.WriteError($"Failed to write to channel for paths: from '{fromPath}' to '{toPath}'. The file channel has likely been completed already.");
+            _console.WriteErrorLine($"Failed to write to channel for paths: from '{fromPath}' to '{toPath}'. The file channel has likely been completed already.");
             return false;
         }
 
         if (!_fileChannel.Writer.TryWrite((fromPath, toPath)))
         {
-            _console.WriteError($"Failed to write file from '{fromPath}' to '{toPath}'.");
+            _console.WriteErrorLine($"Failed to write file from '{fromPath}' to '{toPath}'.");
             return false;
         }
 
