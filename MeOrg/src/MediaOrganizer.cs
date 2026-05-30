@@ -1,7 +1,6 @@
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.QuickTime;
-using Microsoft.Extensions.Logging;
 using MeOrg.Extensions;
 using System.Diagnostics;
 
@@ -20,18 +19,17 @@ public interface IMediaOrganizer
 public class MediaOrganizer : IMediaOrganizer
 {
     private readonly ParallelOptions _parallelOptions;
-    private readonly ILogger<MediaOrganizer> _logger;
-    private readonly RunReport _report;
-    private readonly Stopwatch _stopwatch;
+    private readonly OrganizeRunMetrics _metrics;
+    private readonly ISpectreConsole _console;
+    private readonly Stopwatch _stopwatch = new Stopwatch();
     private readonly IBackgroundFileWriter _writer;
     private readonly IDuplicateFileDetector _duplicateDetector;
     private readonly Dictionary<string, string> _suffixedTargetDirectoryLookup;
 
     public MediaOrganizer(
         IBackgroundFileWriter writer,
-        ILogger<MediaOrganizer> logger,
-        RunReport report,
-        Stopwatch stopwatch,
+        OrganizeRunMetrics metrics,
+        ISpectreConsole console,
         CancellationToken cancellationToken)
     {
         _parallelOptions = new()
@@ -41,9 +39,8 @@ public class MediaOrganizer : IMediaOrganizer
         };
         _duplicateDetector = new DuplicateFileDetector();
         _suffixedTargetDirectoryLookup = new();
-        _logger = logger;
-        _report = report;
-        _stopwatch = stopwatch;
+        _metrics = metrics;
+        _console = console;
         _writer = writer;
     }
 
@@ -54,7 +51,9 @@ public class MediaOrganizer : IMediaOrganizer
         bool skipDedupe,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Start organizing files. From '{source}' to '{target}'. Dedupe enabled: '{skipDedupe}'. Day hours offset: '{dayOffset}'.", source.FullName, target.FullName, !skipDedupe, dayOffset.Hours);
+        _metrics.ReportStarted();
+
+        _stopwatch.Start();
 
         foreach (string subDir in System.IO.Directory.EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly))
         {
@@ -66,7 +65,9 @@ public class MediaOrganizer : IMediaOrganizer
             }
         }
 
-        _logger.LogInformation("Lookup for existing target directories has been created. There are '{existingCount}' existing directories. (Elapsed seconds: {secs})", _suffixedTargetDirectoryLookup.Count, _stopwatch.Elapsed.TotalSeconds);
+        _metrics.ReportPreExistingTargetDirLookupCreatedAt(_stopwatch.Elapsed);
+
+        _stopwatch.Restart();
 
         IEnumerable<string> filesPaths = System.IO.Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
@@ -84,26 +85,30 @@ public class MediaOrganizer : IMediaOrganizer
                 _duplicateDetector.TrySetFileSeen(targetPath);
             }
 
-            _logger.LogInformation("Hash generation for existing target media completed. There are {targetMediaCount} media files in the target directory. (Elapsed seconds: {secs})", _duplicateDetector.SeenCount, _stopwatch.Elapsed.TotalSeconds);
+            _metrics.ReportPreExistingTargetMediaHashGenerationTime(_stopwatch.Elapsed, _duplicateDetector.SeenCount);
 
             filesPaths = filesPaths.Where((path) =>
             {
                 bool isUnique = _duplicateDetector.TrySetFileSeen(path);
                 if (!isUnique)
                 {
-                    _report.ReportDuplicateDetected();
+                    _metrics.ReportDuplicateDetected();
                 }
 
                 return isUnique;
             });
         }
 
+        _stopwatch.Restart();
+
         await Parallel.ForEachAsync(
             filesPaths,
             _parallelOptions,
             (path, ct) => OrganizeFile(path, target, dayOffset, ct));
 
-        _logger.LogInformation("All files have been handed over to background writer. (Elapsed seconds: {secs})", _stopwatch.Elapsed.TotalSeconds);
+        _metrics.ReportSourceFileProcessingTime(_stopwatch.Elapsed);
+
+        _stopwatch.Stop();
     }
 
     private async ValueTask OrganizeFile(
@@ -172,14 +177,14 @@ public class MediaOrganizer : IMediaOrganizer
             createdDateTime = File.GetCreationTime(path);
             if (createdDateTime != default)
             {
-                _report.ReportUnreliableCreationDate();
+                _metrics.ReportNonExifCreationDateTime();
                 return true;
             }
 
         }
         catch (ImageProcessingException processingException)
         {
-            _logger.LogWarning(processingException, "Failed to process image path '{path}'", path);
+            _console.WriteException(processingException);
         }
 
         createdDateTime = default;

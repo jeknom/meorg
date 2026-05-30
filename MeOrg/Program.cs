@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MeOrg;
 using MeOrg.Commands;
-using Microsoft.Extensions.Logging;
 
 var stopwatch = new Stopwatch();
 stopwatch.Start();
@@ -20,11 +19,17 @@ using var sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
     cts.Cancel();
 });
 
-using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
+var metrics = new OrganizeRunMetrics();
+var console = new SpectreConsole(metrics);
+var writer = new BackgroundFileWriter(metrics, console);
+var organizer = new MediaOrganizer(writer, metrics, console, cts.Token);
 
-var report = new RunReport(stopwatch, factory.CreateLogger<RunReport>());
-var writer = new BackgroundFileWriter(report, factory.CreateLogger<BackgroundFileWriter>());
-var organizer = new MediaOrganizer(writer, factory.CreateLogger<MediaOrganizer>(), report, stopwatch, cts.Token);
+Task? liveMetricsTask = null;
+
+if (args.Length > 0 && args[0] == "organize")
+{
+    liveMetricsTask = console.StartLiveMetrics(cts.Token);
+}
 
 Task writerBgTask = Task.Run(() => writer.WriteFilesContinuously(cts.Token));
 
@@ -40,11 +45,13 @@ writer.Shutdown();
 
 await writerBgTask;
 
-if (args.Length > 0 && args[0] == "organize")
-{
-    report.LogReport();
-}
-
 stopwatch.Stop();
+
+cts.Cancel();
+
+if (liveMetricsTask != null)
+{
+    await liveMetricsTask;
+}
 
 return exitCode;

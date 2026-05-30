@@ -1,6 +1,5 @@
-using System.Text;
 using System.Threading.Channels;
-using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 namespace MeOrg;
 
@@ -14,13 +13,13 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 {
     private readonly Channel<(string fromPath, string toPath)> _fileChannel =
         Channel.CreateBounded<(string fromPath, string toPath)>(500);
-    private readonly RunReport _report;
-    private readonly ILogger<BackgroundFileWriter> _logger;
+    private readonly OrganizeRunMetrics _report;
+    private readonly ISpectreConsole _console;
 
-    public BackgroundFileWriter(RunReport report, ILogger<BackgroundFileWriter> logger)
+    public BackgroundFileWriter(OrganizeRunMetrics report, ISpectreConsole console)
     {
         _report = report;
-        _logger = logger;
+        _console = console;
     }
 
     public async Task WriteFilesContinuously(CancellationToken cancellationToken)
@@ -57,7 +56,7 @@ public class BackgroundFileWriter : IBackgroundFileWriter
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while copying from '{from}' to '{to}'", from, to);
+                _console.WriteException(ex);
             }
         }
     }
@@ -66,13 +65,13 @@ public class BackgroundFileWriter : IBackgroundFileWriter
     {
         if (!await _fileChannel.Writer.WaitToWriteAsync(cancellationToken))
         {
-            _logger.LogError("Failed to write to channel for paths: from '{from}' to '{to}'. The file channel has likely been completed already.", fromPath, toPath);
+            _console.WriteError($"Failed to write to channel for paths: from '{fromPath}' to '{toPath}'. The file channel has likely been completed already.");
             return false;
         }
 
         if (!_fileChannel.Writer.TryWrite((fromPath, toPath)))
         {
-            _logger.LogError("Failed to write file from '{from}' to '{to}'.", fromPath, toPath);
+            _console.WriteError($"Failed to write file from '{fromPath}' to '{toPath}'.");
             return false;
         }
 
