@@ -4,6 +4,7 @@ namespace MeOrg;
 
 public interface IBackgroundFileWriter
 {
+    Task WriteFilesContinuously(CancellationToken cancellationToken);
     Task<bool> TryAddFile(string fromPath, string toPath, CancellationToken cancellationToken);
     void Shutdown();
 }

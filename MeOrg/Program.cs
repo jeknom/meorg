@@ -24,26 +24,15 @@ var console = new SpectreConsole(metrics);
 var writer = new BackgroundFileWriter(metrics, console);
 var organizer = new MediaOrganizer(writer, metrics, console, cts.Token);
 
-Task writerBgTask = Task.Run(() => writer.WriteFilesContinuously(cts.Token));
-
 RootCommand rootCommand = new("MeOrg is a media organizer CLI tool.");
 
-rootCommand.Subcommands.Add(new OrganizeCommand(organizer, console));
+rootCommand.Subcommands.Add(new OrganizeCommand(organizer));
 
 ParseResult parseResult = rootCommand.Parse(args);
 
 int exitCode = await parseResult.InvokeAsync(null, cts.Token);
 
-writer.Shutdown();
-
-await writerBgTask;
-
 stopwatch.Stop();
-
-if (args.Length > 0 && args[0] == "organize")
-{
-    console.WriteReport();
-}
 
 cts.Cancel();
 

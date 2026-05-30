@@ -7,7 +7,8 @@ public interface ISpectreConsole
     void WriteInfoLine(string message);
     void WriteErrorLine(string message);
     void WriteException(Exception ex);
-    void WriteInputs(string source, string target, int dayOffset, bool dedupe, bool yesToAll);
+    void WriteReport();
+    void WriteInputs(string source, string target, int dayOffset, bool dedupe, bool promptUser);
     Task<bool> Confirm(string question, CancellationToken cancellationToken);
 }
 
@@ -40,7 +41,7 @@ public class SpectreConsole : ISpectreConsole
         AnsiConsole.WriteException(ex, ExceptionFormats.ShortenPaths);
     }
 
-    public void WriteInputs(string source, string target, int dayOffset, bool dedupe, bool yesToAll)
+    public void WriteInputs(string source, string target, int dayOffset, bool dedupe, bool promptUser)
     {
         var table = new Table().RoundedBorder().BorderColor(Color.Green1).Title("Inputs");
         table.AddColumn("Input");
@@ -50,7 +51,7 @@ public class SpectreConsole : ISpectreConsole
         table.AddRow("Target", target);
         table.AddRow("Day offset hours", dayOffset.ToString());
         table.AddRow("Dedupe media", dedupe ? "Yes" : "No");
-        table.AddRow("Say yes to all prompts", yesToAll ? "Yes" : "Prompt user");
+        table.AddRow("Prompt user", promptUser ? "Yes" : "No");
 
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine();

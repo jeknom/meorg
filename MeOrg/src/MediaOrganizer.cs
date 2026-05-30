@@ -54,6 +54,9 @@ public class MediaOrganizer : IMediaOrganizer
         CancellationToken cancellationToken)
     {
         _metrics.ReportStarted();
+        _console.WriteInputs(source.FullName, target.FullName, (int)dayOffset.TotalHours, dedupe: !skipDedupe, promptUser: showPlanPrompt);
+
+        Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(cancellationToken), cancellationToken);
 
         _stopwatch.Start();
         _console.WriteInfoLine("Populating pre-existing target directory lookup...");
@@ -133,6 +136,12 @@ public class MediaOrganizer : IMediaOrganizer
 
         _console.WriteInfoLine("Wrapping up...");
         _stopwatch.Stop();
+
+        _writer.Shutdown();
+
+        await writerTask;
+
+        _console.WriteReport();
     }
 
     private async ValueTask OrganizeFile(
