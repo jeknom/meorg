@@ -1,10 +1,6 @@
 ﻿using System.CommandLine;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MeOrg.Commands;
-
-var stopwatch = new Stopwatch();
-stopwatch.Start();
 
 using var cts = new CancellationTokenSource();
 using var sigInt = PosixSignalRegistration.Create(PosixSignal.SIGINT, ctx =>
@@ -25,8 +21,6 @@ rootCommand.Subcommands.Add(new OrganizeCommand());
 ParseResult parseResult = rootCommand.Parse(args);
 
 int exitCode = await parseResult.InvokeAsync(null, cts.Token);
-
-stopwatch.Stop();
 
 cts.Cancel();
 
