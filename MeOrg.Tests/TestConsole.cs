@@ -15,7 +15,7 @@ public class TestConsole : IConsole
 
     public Task<bool> Confirm(string question, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(true);
     }
 
     public void WriteErrorLine(string message)

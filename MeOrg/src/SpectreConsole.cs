@@ -5,14 +5,21 @@ namespace MeOrg;
 public class SpectreConsole : IConsole
 {
     private readonly OrganizeRunMetrics _metrics;
+    private readonly bool _yesToAll;
 
-    public SpectreConsole(OrganizeRunMetrics metrics)
+    public SpectreConsole(OrganizeRunMetrics metrics, bool yesToAll)
     {
         _metrics = metrics;
+        _yesToAll = yesToAll;
     }
 
     public Task<bool> Confirm(string question, CancellationToken cancellationToken)
     {
+        if (_yesToAll)
+        {
+            return Task.FromResult(true);
+        }
+
         return AnsiConsole.ConfirmAsync($"{DateTime.UtcNow} - [bold yellow] Question:[/] '{question}'", defaultValue: false, cancellationToken);
     }
 

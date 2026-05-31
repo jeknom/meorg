@@ -5,14 +5,10 @@ namespace MeOrg.Commands;
 
 public class OrganizeCommand : Command
 {
-    private readonly IMediaOrganizer _organizer;
-
-    public OrganizeCommand(IMediaOrganizer organizer) : base(
+    public OrganizeCommand() : base(
         "organize",
         "Used to organize media from an unorganized source directory into target directory.")
     {
-        _organizer = organizer;
-
         Option<DirectoryInfo> sourceDirOption = new("--source")
         {
             Description = "Unorganized media source directory.",
@@ -62,29 +58,20 @@ public class OrganizeCommand : Command
         };
         Options.Add(yesToAll);
 
-        SetAction(async (parseResult, ct) => await OrganizeAction(
-            sourceDir: parseResult.GetValue(sourceDirOption)!,
-            targetDir: parseResult.GetValue(targetDirOption)!,
-            dayOffsetHours: parseResult.GetValue(dayOffsetHours),
-            skipDedupe: parseResult.GetValue(skipDedupe),
-            yesToAll: parseResult.GetValue(yesToAll),
-            cancellationToken: ct));
-    }
+        SetAction(async (parseResult, ct) =>
+        {
+            var metrics = new OrganizeRunMetrics();
+            var console = new SpectreConsole(metrics, yesToAll: parseResult.GetValue(yesToAll));
+            var writer = new BackgroundFileWriter(metrics, console);
+            var duplicateDetector = new DuplicateFileDetector(metrics, console);
+            var organizer = new MediaOrganizer(writer, duplicateDetector, metrics, console, ct);
 
-    private async Task OrganizeAction(
-        DirectoryInfo sourceDir,
-        DirectoryInfo targetDir,
-        int dayOffsetHours,
-        bool skipDedupe,
-        bool yesToAll,
-        CancellationToken cancellationToken)
-    {
-        await _organizer.Organize(
-            sourceDir,
-            targetDir,
-            dayOffset: TimeSpan.FromHours(dayOffsetHours),
-            skipDedupe,
-            showPlanPrompt: !yesToAll,
-            cancellationToken);
+            await organizer.Organize(
+                source: parseResult.GetValue(sourceDirOption)!,
+                target: parseResult.GetValue(targetDirOption)!,
+                dayOffset: TimeSpan.FromHours(parseResult.GetValue(dayOffsetHours)),
+                cancellationToken: ct
+            );
+        });
     }
 }
