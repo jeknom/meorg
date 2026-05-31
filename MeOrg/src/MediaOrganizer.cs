@@ -21,7 +21,7 @@ public class MediaOrganizer : IMediaOrganizer
 {
     private readonly ParallelOptions _parallelOptions;
     private readonly OrganizeRunMetrics _metrics;
-    private readonly ISpectreConsole _console;
+    private readonly IConsole _console;
     private readonly Stopwatch _stopwatch = new Stopwatch();
     private readonly IBackgroundFileWriter _writer;
     private readonly IDuplicateFileDetector _duplicateDetector;
@@ -30,7 +30,7 @@ public class MediaOrganizer : IMediaOrganizer
     public MediaOrganizer(
         IBackgroundFileWriter writer,
         OrganizeRunMetrics metrics,
-        ISpectreConsole console,
+        IConsole console,
         CancellationToken cancellationToken)
     {
         _parallelOptions = new()
@@ -169,7 +169,7 @@ public class MediaOrganizer : IMediaOrganizer
         }
 
         string fileName = Path.GetFileName(path);
-        string destinationPath = $"{target.FullName}/{subDirName}/{fileName}";
+        string destinationPath = Path.Combine(target.FullName, subDirName, fileName);
         await _writer.TryAddFile(fromPath: path, toPath: destinationPath, cancellationToken);
     }
 

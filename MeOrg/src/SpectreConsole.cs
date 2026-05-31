@@ -2,17 +2,7 @@ using Spectre.Console;
 
 namespace MeOrg;
 
-public interface ISpectreConsole
-{
-    void WriteInfoLine(string message);
-    void WriteErrorLine(string message);
-    void WriteException(Exception ex);
-    void WriteReport();
-    void WriteInputs(string source, string target, int dayOffset, bool dedupe, bool promptUser);
-    Task<bool> Confirm(string question, CancellationToken cancellationToken);
-}
-
-public class SpectreConsole : ISpectreConsole
+public class SpectreConsole : IConsole
 {
     private readonly OrganizeRunMetrics _metrics;
 

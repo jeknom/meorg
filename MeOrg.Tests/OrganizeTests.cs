@@ -8,7 +8,7 @@ public class OrganizeTests : IDisposable
     private readonly IMediaOrganizer _mediaOrganizer;
     private readonly BackgroundFileWriter _writer;
     private readonly OrganizeRunMetrics _metrics;
-    private readonly SpectreConsole _console;
+    private readonly IConsole _console;
     private readonly CancellationTokenSource _cts = new CancellationTokenSource();
     private readonly string _sourceBase = new(Path.Combine(AppContext.BaseDirectory, "TestFiles/Scenarios"));
     private readonly DirectoryInfo _target = Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "TestTarget", Guid.NewGuid().ToString()));
@@ -18,7 +18,7 @@ public class OrganizeTests : IDisposable
     {
         _stopwatch.Start();
         _metrics = new OrganizeRunMetrics();
-        _console = new SpectreConsole(_metrics);
+        _console = new TestConsole(output, _metrics);
         _writer = new BackgroundFileWriter(_metrics, _console);
         _mediaOrganizer = new MediaOrganizer(_writer, _metrics, _console, _cts.Token);
         Task.Run(() => _writer.WriteFilesContinuously(_cts.Token));

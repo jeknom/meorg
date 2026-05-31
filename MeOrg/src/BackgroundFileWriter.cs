@@ -14,9 +14,9 @@ public class BackgroundFileWriter : IBackgroundFileWriter
     private readonly Channel<(string fromPath, string toPath)> _fileChannel =
         Channel.CreateBounded<(string fromPath, string toPath)>(500);
     private readonly OrganizeRunMetrics _report;
-    private readonly ISpectreConsole _console;
+    private readonly IConsole _console;
 
-    public BackgroundFileWriter(OrganizeRunMetrics report, ISpectreConsole console)
+    public BackgroundFileWriter(OrganizeRunMetrics report, IConsole console)
     {
         _report = report;
         _console = console;
