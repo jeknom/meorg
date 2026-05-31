@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using MeOrg.Extensions;
 
 namespace MeOrg;
@@ -10,7 +11,7 @@ interface IDuplicateFileDetector
 
 public class DuplicateFileDetector : IDuplicateFileDetector
 {
-    private readonly HashSet<string> _seen = new();
+    private readonly ConcurrentDictionary<string, byte> _seen = new();
 
     public int SeenCount => _seen.Count;
 
@@ -19,13 +20,6 @@ public class DuplicateFileDetector : IDuplicateFileDetector
         using FileStream fileStream = File.Open(path, FileMode.Open);
         string hash = fileStream.GenerateSampledHash();
 
-        if (_seen.Contains(hash))
-        {
-            return false;
-        }
-
-        _seen.Add(hash);
-
-        return true;
+        return _seen.TryAdd(hash, 0);
     }
 }
