@@ -17,7 +17,7 @@ public class DuplicateFileDetector : IDuplicateFileDetector
 
     public bool TrySetFileSeen(string path)
     {
-        using FileStream fileStream = File.Open(path, FileMode.Open);
+        using FileStream fileStream = File.OpenRead(path);
         string hash = fileStream.GenerateSampledHash();
 
         return _seen.TryAdd(hash, 0);
