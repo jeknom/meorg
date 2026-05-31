@@ -90,7 +90,7 @@ public static partial class FileHelper
 
     public static bool IsSupportedMediaFileExtension(string path)
     {
-        string ext = Path.GetExtension(path).ToLower();
+        string ext = Path.GetExtension(path);
         if (Constants.SUPPORTED_IMAGE_EXTENSIONS.Contains(ext))
         {
             return true;
