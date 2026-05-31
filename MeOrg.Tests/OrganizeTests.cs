@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using MeOrg.Extensions;
 using Xunit.Abstractions;
 
 namespace MeOrg.Tests;
@@ -80,6 +81,9 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Respects_Day_Offset()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "RespectDayOffset"));
+        Assert.True(FileHelper.TryExtractExifCreationDateTime(Path.Combine(source.FullName, "TAKEN_AT_12_22.HEIC"), _console, out DateTime testFileCreatedAt));
+        Assert.Equal("2026-05-24", testFileCreatedAt.ToMeorgDateString());
+
         await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(13), skipDedupe: true, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-23/TAKEN_AT_12_22.HEIC"));
     }
