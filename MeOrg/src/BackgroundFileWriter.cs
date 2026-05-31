@@ -13,17 +13,25 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 {
     private readonly Channel<(string fromPath, string toPath)> _fileChannel =
         Channel.CreateBounded<(string fromPath, string toPath)>(500);
-    private readonly OrganizeRunMetrics _report;
+    private readonly OrganizeRunMetrics _metrics;
     private readonly IConsole _console;
+    private bool isStarted;
 
-    public BackgroundFileWriter(OrganizeRunMetrics report, IConsole console)
+    public BackgroundFileWriter(OrganizeRunMetrics metrics, IConsole console)
     {
-        _report = report;
+        _metrics = metrics;
         _console = console;
     }
 
     public async Task WriteFilesContinuously(CancellationToken cancellationToken)
     {
+        if (isStarted)
+        {
+            throw new InvalidOperationException("Writer has already been started!");
+        }
+
+        isStarted = true;
+
         await foreach (var (from, to) in _fileChannel.Reader.ReadAllAsync(cancellationToken))
         {
             try
@@ -38,7 +46,7 @@ public class BackgroundFileWriter : IBackgroundFileWriter
                 {
                     File.Copy(from, to);
 
-                    _report.ReportFileCopied();
+                    _metrics.ReportFileCopied();
 
                     continue;
                 }
@@ -52,7 +60,7 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 
                 File.Copy(from, suffixedName);
 
-                _report.ReportFileCopied();
+                _metrics.ReportFileCopied();
             }
             catch (Exception ex)
             {
