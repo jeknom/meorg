@@ -69,8 +69,7 @@ public class OrganizeCommand : Command
             await organizer.Organize(
                 source: parseResult.GetValue(sourceDirOption)!,
                 target: parseResult.GetValue(targetDirOption)!,
-                dayOffset: TimeSpan.FromHours(parseResult.GetValue(dayOffsetHours)),
-                cancellationToken: ct
+                dayOffset: TimeSpan.FromHours(parseResult.GetValue(dayOffsetHours))
             );
         });
     }

@@ -5,11 +5,7 @@ namespace MeOrg;
 
 public interface IMediaOrganizer
 {
-    Task Organize(
-        DirectoryInfo source,
-        DirectoryInfo target,
-        TimeSpan dayOffset,
-        CancellationToken cancellationToken);
+    Task Organize(DirectoryInfo source, DirectoryInfo target, TimeSpan dayOffset);
 }
 
 public class MediaOrganizer : IMediaOrganizer
@@ -21,6 +17,7 @@ public class MediaOrganizer : IMediaOrganizer
     private readonly IBackgroundFileWriter _writer;
     private readonly IDuplicateFileDetector _duplicateDetector;
     private readonly Dictionary<string, string> _suffixedTargetDirectoryLookup;
+    private readonly CancellationToken _cancellationToken;
 
     public MediaOrganizer(
         IBackgroundFileWriter writer,
@@ -34,6 +31,7 @@ public class MediaOrganizer : IMediaOrganizer
             MaxDegreeOfParallelism = Environment.ProcessorCount,
             CancellationToken = cancellationToken
         };
+        _cancellationToken = cancellationToken;
         _suffixedTargetDirectoryLookup = new();
         _duplicateDetector = duplicateDetector;
         _metrics = metrics;
@@ -44,12 +42,11 @@ public class MediaOrganizer : IMediaOrganizer
     public async Task Organize(
         DirectoryInfo source,
         DirectoryInfo target,
-        TimeSpan dayOffset,
-        CancellationToken cancellationToken)
+        TimeSpan dayOffset)
     {
         _metrics.ReportStarted();
 
-        Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(cancellationToken), cancellationToken);
+        Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(_cancellationToken), _cancellationToken);
 
         _stopwatch.Start();
         _console.WriteInfoLine("Populating pre-existing target directory lookup...");
@@ -85,7 +82,7 @@ public class MediaOrganizer : IMediaOrganizer
         _stopwatch.Restart();
 
 
-        if (filesPaths.Any() && !await _console.Confirm($"This operation will copy '{filesPaths.Count()}' files to target directory. Continue?", cancellationToken))
+        if (filesPaths.Any() && !await _console.Confirm($"This operation will copy '{filesPaths.Count()}' files to target directory. Continue?", _cancellationToken))
         {
             _console.WriteInfoLine("Organize canceled, have a nice day!");
             return;
