@@ -5,17 +5,18 @@ using MetadataExtractor.Formats.QuickTime;
 
 namespace MeOrg;
 
-public static class FileHelper
+public static partial class FileHelper
 {
-    private static readonly string SUFFIX_REGEX = @"\((\d+)\)$";
+    [GeneratedRegex(@"\((\d+)\)$")]
+    private static partial Regex SuffixRegex();
 
     public static string GetFilepathWithIncrementedNumericalSuffix(string currentPath)
     {
         string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(currentPath);
-        Match match = Regex.Match(fileNameWithoutExtension, SUFFIX_REGEX);
+        Match match = SuffixRegex().Match(fileNameWithoutExtension);
         if (match.Success && int.TryParse(match.Groups[1].Value, out int result))
         {
-            fileNameWithoutExtension = Regex.Replace(fileNameWithoutExtension, SUFFIX_REGEX, $"({result + 1})");
+            fileNameWithoutExtension = SuffixRegex().Replace(fileNameWithoutExtension, $"({result + 1})");
         }
         else
         {
