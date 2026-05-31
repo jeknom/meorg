@@ -54,7 +54,7 @@ public class BackgroundFileWriter : IBackgroundFileWriter
                 string suffixedName = to;
                 do
                 {
-                    suffixedName = FileNameHelper.GetNextPossiblePath(suffixedName);
+                    suffixedName = FileHelper.GetFilepathWithIncrementedNumericalSuffix(suffixedName);
                 }
                 while (File.Exists(suffixedName));
 

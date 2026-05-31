@@ -6,7 +6,6 @@ public class OrganizeRunMetrics
 {
     public int CopyCount => _copyCount;
     public int DuplicateCount => _duplicateCount;
-    public int NonExifCreationDateTimeCount => _nonExifCreationDateTimeCount;
     public double ElapsedSeconds => _stopwatch.Elapsed.TotalSeconds;
     public int PreExistingMediaInTargetCount { get; private set; }
     public DateTime StartTime { get; private set; }
@@ -16,7 +15,6 @@ public class OrganizeRunMetrics
 
     private int _copyCount = 0;
     private int _duplicateCount = 0;
-    private int _nonExifCreationDateTimeCount = 0;
 
     private readonly Stopwatch _stopwatch = new Stopwatch();
 
@@ -74,10 +72,5 @@ public class OrganizeRunMetrics
     public void ReportDuplicateDetected()
     {
         Interlocked.Increment(ref _duplicateCount);
-    }
-
-    public void ReportNonExifCreationDateTime()
-    {
-        Interlocked.Increment(ref _nonExifCreationDateTimeCount);
     }
 }

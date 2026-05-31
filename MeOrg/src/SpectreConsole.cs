@@ -59,7 +59,6 @@ public class SpectreConsole : IConsole
         table.AddRow("Source file processing time", _metrics.SourceFileProcessingTime != default ? $"{_metrics.SourceFileProcessingTime.TotalSeconds}s" : "Not reported");
         table.AddRow("Organized files", _metrics.CopyCount.ToString());
         table.AddRow("Duplicates filtered", _metrics.DuplicateCount.ToString());
-        table.AddRow("Files with non-exif creation datetime", _metrics.NonExifCreationDateTimeCount.ToString());
         table.AddRow("Total seconds elapsed", _metrics.ElapsedSeconds.ToString());
 
         AnsiConsole.Write(table);

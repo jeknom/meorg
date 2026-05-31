@@ -1,6 +1,3 @@
-using MetadataExtractor;
-using MetadataExtractor.Formats.Exif;
-using MetadataExtractor.Formats.QuickTime;
 using MeOrg.Extensions;
 using System.Diagnostics;
 
@@ -77,7 +74,7 @@ public class MediaOrganizer : IMediaOrganizer
 
         IEnumerable<string> filesPaths = System.IO.Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
-            .Where(IsSupportedExtension);
+            .Where(FileHelper.IsSupportedMediaFileExtension);
 
         if (!skipDedupe)
         {
@@ -85,7 +82,7 @@ public class MediaOrganizer : IMediaOrganizer
 
             foreach (string targetPath in System.IO.Directory.EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories))
             {
-                if (!IsSupportedExtension(targetPath))
+                if (!FileHelper.IsSupportedMediaFileExtension(targetPath))
                 {
                     continue;
                 }
@@ -152,7 +149,8 @@ public class MediaOrganizer : IMediaOrganizer
     {
         string subDirName = Constants.DEFAULT_SUBDIR_NAME;
 
-        if (TryExtractCreationTime(path, out DateTime creationDateTime))
+        if (FileHelper.TryExtractExifCreationDateTime(path, _console, out DateTime creationDateTime) ||
+            FileHelper.TryExtractFileCreationDateTime(path, _console, out creationDateTime))
         {
             DateTime withOffset = creationDateTime - dayOffset;
             if (creationDateTime.Day != withOffset.Day)
@@ -171,72 +169,5 @@ public class MediaOrganizer : IMediaOrganizer
         string fileName = Path.GetFileName(path);
         string destinationPath = Path.Combine(target.FullName, subDirName, fileName);
         await _writer.TryAddFile(fromPath: path, toPath: destinationPath, cancellationToken);
-    }
-
-    private bool TryExtractCreationTime(string path, out DateTime createdDateTime)
-    {
-        try
-        {
-            IEnumerable<MetadataExtractor.Directory> directories = ImageMetadataReader.ReadMetadata(path);
-
-            var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out createdDateTime) ?? false)
-            {
-                return true;
-            }
-
-            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out createdDateTime) ?? false)
-            {
-                return true;
-            }
-
-            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTime, out createdDateTime) ?? false)
-            {
-                return true;
-            }
-
-            var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
-            if (gpsDirectory?.TryGetGpsDate(out createdDateTime) ?? false)
-            {
-                return true;
-            }
-
-            var quickTimeDirectory = directories.OfType<QuickTimeMetadataHeaderDirectory>().FirstOrDefault();
-            if (quickTimeDirectory?.TryGetDateTime(QuickTimeMetadataHeaderDirectory.TagCreationDate, out createdDateTime) ?? false)
-            {
-                return true;
-            }
-
-            createdDateTime = File.GetCreationTime(path);
-            if (createdDateTime != default)
-            {
-                _metrics.ReportNonExifCreationDateTime();
-                return true;
-            }
-
-        }
-        catch (ImageProcessingException processingException)
-        {
-            _console.WriteException(processingException);
-        }
-
-        createdDateTime = default;
-        return false;
-    }
-
-    private static bool IsSupportedExtension(string path)
-    {
-        string ext = Path.GetExtension(path).ToLower();
-        if (Constants.SUPPORTED_IMAGE_EXTENSIONS.Contains(ext))
-        {
-            return true;
-        }
-
-        if (Constants.SUPPORTED_VIDEO_EXTENSIONS.Contains(ext))
-        {
-            return true;
-        }
-
-        return false;
     }
 }

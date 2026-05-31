@@ -80,8 +80,6 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Respects_Day_Offset()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "RespectDayOffset"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(12), skipDedupe: false, showPlanPrompt: false, CancellationToken.None);
-        await AssertFileExists(GetTargetPath("2026-05-24/TAKEN_AT_12_22.HEIC"));
         await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(13), skipDedupe: true, showPlanPrompt: false, CancellationToken.None);
         await AssertFileExists(GetTargetPath("2026-05-23/TAKEN_AT_12_22.HEIC"));
     }

@@ -48,7 +48,6 @@ public class TestConsole : IConsole
         _testOutput.WriteLine("Source file processing time: {0}s", _metrics.SourceFileProcessingTime.TotalSeconds.ToString());
         _testOutput.WriteLine("Organized files: {0}", _metrics.CopyCount.ToString());
         _testOutput.WriteLine("Duplicates filtered: {0}", _metrics.DuplicateCount.ToString());
-        _testOutput.WriteLine("Non-exif creation datetime: {0}", _metrics.NonExifCreationDateTimeCount.ToString());
         _testOutput.WriteLine("Total seconds elapsed: {0}s", _metrics.ElapsedSeconds.ToString());
         _testOutput.WriteLine("\n");
     }
