@@ -22,6 +22,4 @@ ParseResult parseResult = rootCommand.Parse(args);
 
 int exitCode = await parseResult.InvokeAsync(null, cts.Token);
 
-cts.Cancel();
-
 return exitCode;
