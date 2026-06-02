@@ -51,13 +51,24 @@ public class MediaOrganizer : IMediaOrganizer
         _stopwatch.Start();
         _console.WriteInfoLine("Populating pre-existing target directory lookup...");
 
-        foreach (string subDir in Directory.EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly))
+        List<string> subDirNames = Directory
+            .EnumerateDirectories(target.FullName, "*", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList()!;
+
+        var exactDirNames = new HashSet<string>(subDirNames, StringComparer.Ordinal);
+
+        foreach (string dirName in subDirNames)
         {
-            string directoryName = Path.GetFileName(subDir);
-            if (directoryName.Length >= 10 && DateOnly.TryParseExact(directoryName[..10], "yyyy-MM-dd", out _))
+            if (dirName.Length >= 10 && DateOnly.TryParseExact(dirName[..10], "yyyy-MM-dd", out _))
             {
-                string prefix = directoryName[..10];
-                _suffixedTargetDirectoryLookup.TryAdd(prefix, directoryName);
+                string prefix = dirName[..10];
+                // If a directory matching the prefix exactly exists, it wins, don't redirect.
+                if (!exactDirNames.Contains(prefix))
+                {
+                    _suffixedTargetDirectoryLookup.TryAdd(prefix, dirName);
+                }
             }
         }
 
