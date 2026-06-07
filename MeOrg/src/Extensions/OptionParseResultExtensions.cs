@@ -1,4 +1,4 @@
-namespace MeOrg.Validators;
+namespace MeOrg.Extensions;
 
 using System.CommandLine.Parsing;
 
