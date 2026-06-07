@@ -22,21 +22,11 @@ public class OrganizeRunMetrics
 
     public void ReportTargetMediaHashGenerationTime(TimeSpan elapsed, int existingMediaFileCount)
     {
-        if (TargetMediaHashGenerationTime != default)
-        {
-            return;
-        }
-
         TargetMediaHashGenerationTime = elapsed;
     }
 
     public void ReportSourceFileProcessingTime(TimeSpan elapsed)
     {
-        if (SourceFileProcessingTime != default)
-        {
-            return;
-        }
-
         SourceFileProcessingTime = elapsed;
     }
 
