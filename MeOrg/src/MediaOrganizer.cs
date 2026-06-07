@@ -44,8 +44,6 @@ public class MediaOrganizer : IMediaOrganizer
         DirectoryInfo target,
         TimeSpan dayOffset)
     {
-        _metrics.ReportStarted();
-
         Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(_cancellationToken), _cancellationToken);
 
         _stopwatch.Start();
@@ -72,8 +70,6 @@ public class MediaOrganizer : IMediaOrganizer
             }
         }
 
-        _metrics.ReportPreExistingTargetDirLookupCreatedAt(_stopwatch.Elapsed);
-
         _stopwatch.Restart();
 
         IEnumerable<string> targetMediaPaths = Directory
@@ -81,7 +77,7 @@ public class MediaOrganizer : IMediaOrganizer
             .Where(FileHelper.IsSupportedMediaFileExtension);
         _duplicateDetector.MarkPathsAsSeen(targetMediaPaths);
 
-        _metrics.ReportPreExistingTargetMediaHashGenerationTime(_stopwatch.Elapsed, _duplicateDetector.SeenCount);
+        _metrics.ReportTargetMediaHashGenerationTime(_stopwatch.Elapsed, _duplicateDetector.SeenCount);
 
         _console.WriteInfoLine("Filtering duplicate source media...");
 

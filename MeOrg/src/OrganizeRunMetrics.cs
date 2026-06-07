@@ -7,10 +7,7 @@ public class OrganizeRunMetrics
     public int CopyCount => _copyCount;
     public int DuplicateCount => _duplicateCount;
     public double ElapsedSeconds => _stopwatch.Elapsed.TotalSeconds;
-    public int PreExistingMediaInTargetCount { get; private set; }
-    public DateTime StartTime { get; private set; }
-    public TimeSpan PreExistingTargetDirLookupCreationTime { get; private set; }
-    public TimeSpan PreExistingTargetMediaHashGenerationTime { get; private set; }
+    public TimeSpan TargetMediaHashGenerationTime { get; private set; }
     public TimeSpan SourceFileProcessingTime { get; private set; }
 
     private int _copyCount = 0;
@@ -23,35 +20,14 @@ public class OrganizeRunMetrics
         _stopwatch.Start();
     }
 
-    public void ReportStarted()
+    public void ReportTargetMediaHashGenerationTime(TimeSpan elapsed, int existingMediaFileCount)
     {
-        if (StartTime != default)
+        if (TargetMediaHashGenerationTime != default)
         {
             return;
         }
 
-        StartTime = DateTime.UtcNow;
-    }
-
-    public void ReportPreExistingTargetDirLookupCreatedAt(TimeSpan elapsed)
-    {
-        if (PreExistingTargetDirLookupCreationTime != default)
-        {
-            return;
-        }
-
-        PreExistingTargetDirLookupCreationTime = elapsed;
-    }
-
-    public void ReportPreExistingTargetMediaHashGenerationTime(TimeSpan elapsed, int existingMediaFileCount)
-    {
-        if (PreExistingTargetMediaHashGenerationTime != default)
-        {
-            return;
-        }
-
-        PreExistingTargetMediaHashGenerationTime = elapsed;
-        PreExistingMediaInTargetCount = existingMediaFileCount;
+        TargetMediaHashGenerationTime = elapsed;
     }
 
     public void ReportSourceFileProcessingTime(TimeSpan elapsed)

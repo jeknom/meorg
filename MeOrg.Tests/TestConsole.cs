@@ -43,12 +43,11 @@ public class TestConsole : IConsole
     public void WriteReport()
     {
         _testOutput.WriteLine("\nREPORT");
-        _testOutput.WriteLine("Pre-existing target directory lookup creation time: {0}s", _metrics.PreExistingTargetDirLookupCreationTime.TotalSeconds.ToString());
-        _testOutput.WriteLine("Pre-existing target media hash generation time: {0}s", _metrics.PreExistingTargetMediaHashGenerationTime.TotalSeconds.ToString());
-        _testOutput.WriteLine("Source file processing time: {0}s", _metrics.SourceFileProcessingTime.TotalSeconds.ToString());
-        _testOutput.WriteLine("Organized files: {0}", _metrics.CopyCount.ToString());
-        _testOutput.WriteLine("Duplicates filtered: {0}", _metrics.DuplicateCount.ToString());
-        _testOutput.WriteLine("Total seconds elapsed: {0}s", _metrics.ElapsedSeconds.ToString());
+        _testOutput.WriteLine("Duplicates: {0}", _metrics.DuplicateCount.ToString());
+        _testOutput.WriteLine("Copied media: {0}", _metrics.CopyCount.ToString());
+        _testOutput.WriteLine("Target hashing time: {0}s", _metrics.TargetMediaHashGenerationTime.TotalSeconds.ToString());
+        _testOutput.WriteLine("Source processing time: {0}s", _metrics.SourceFileProcessingTime.TotalSeconds.ToString());
+        _testOutput.WriteLine("Total elapsed time: {0}s", _metrics.ElapsedSeconds.ToString());
         _testOutput.WriteLine("\n");
     }
 }

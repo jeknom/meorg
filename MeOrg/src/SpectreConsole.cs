@@ -61,12 +61,11 @@ public class SpectreConsole : IConsole
         table.AddColumn("Metric");
         table.AddColumn("Value");
 
-        table.AddRow("Pre-existing target directory lookup creation time", _metrics.PreExistingTargetDirLookupCreationTime != default ? $"{_metrics.PreExistingTargetDirLookupCreationTime.TotalSeconds}s" : "Not reported");
-        table.AddRow("Pre-existing target media hash generation time", _metrics.PreExistingTargetMediaHashGenerationTime != default ? $"{_metrics.PreExistingTargetMediaHashGenerationTime.TotalSeconds}s" : "Not reported");
-        table.AddRow("Source file processing time", _metrics.SourceFileProcessingTime != default ? $"{_metrics.SourceFileProcessingTime.TotalSeconds}s" : "Not reported");
-        table.AddRow("Organized files", _metrics.CopyCount.ToString());
-        table.AddRow("Duplicates filtered", _metrics.DuplicateCount.ToString());
-        table.AddRow("Total seconds elapsed", _metrics.ElapsedSeconds.ToString());
+        table.AddRow("Duplicates", _metrics.DuplicateCount.ToString());
+        table.AddRow("Copied media", _metrics.CopyCount.ToString());
+        table.AddRow("Target hashing time", _metrics.TargetMediaHashGenerationTime != default ? $"{_metrics.TargetMediaHashGenerationTime.TotalSeconds}s" : "Not reported");
+        table.AddRow("Source processing time", _metrics.SourceFileProcessingTime != default ? $"{_metrics.SourceFileProcessingTime.TotalSeconds}s" : "Not reported");
+        table.AddRow("Total elapsed time", $"{_metrics.ElapsedSeconds}s");
 
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine();
