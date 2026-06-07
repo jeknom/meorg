@@ -20,17 +20,17 @@ public class SpectreConsole : IConsole
             return Task.FromResult(true);
         }
 
-        return AnsiConsole.ConfirmAsync($"{DateTime.UtcNow} - [bold yellow] Question:[/] '{question}'", defaultValue: false, cancellationToken);
+        return AnsiConsole.ConfirmAsync($"{DateTime.UtcNow} - [bold yellow] Question:[/] '{Markup.Escape(question)}'", defaultValue: false, cancellationToken);
     }
 
     public void WriteInfoLine(string message)
     {
-        AnsiConsole.MarkupLineInterpolated($"{DateTime.UtcNow} - [bold cyan] Info:[/] '{message}'");
+        AnsiConsole.MarkupLineInterpolated($"{DateTime.UtcNow} - [bold cyan] Info:[/] '{Markup.Escape(message)}'");
     }
 
     public void WriteErrorLine(string message)
     {
-        AnsiConsole.MarkupLineInterpolated($"{DateTime.UtcNow} - [bold red]✗ Error:[/] '{message}'");
+        AnsiConsole.MarkupLineInterpolated($"{DateTime.UtcNow} - [bold red]✗ Error:[/] '{Markup.Escape(message)}'");
     }
 
     public void WriteException(Exception ex)
@@ -44,8 +44,8 @@ public class SpectreConsole : IConsole
         table.AddColumn("Input");
         table.AddColumn("Value");
 
-        table.AddRow("Source", source);
-        table.AddRow("Target", target);
+        table.AddRow("Source", Markup.Escape(source));
+        table.AddRow("Target", Markup.Escape(target));
         table.AddRow("Day offset hours", dayOffset.ToString());
         table.AddRow("Dedupe media", dedupe ? "Yes" : "No");
         table.AddRow("Prompt user", promptUser ? "Yes" : "No");
