@@ -37,6 +37,8 @@ my-organized-media
 
 ## Install
 
+You can download a binary matching your OS from the [Github releases page](https://github.com/jeknom/meorg/releases) and install it to your path. If you want to make a build yourself, follow the steps below.
+
 **Prerequisite:** [Install .NET 10](https://dotnet.microsoft.com/en-us/download)
 
 - Navigate to the app project: `cd ./MeOrg`.
