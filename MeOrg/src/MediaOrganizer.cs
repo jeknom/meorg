@@ -93,9 +93,6 @@ public class MediaOrganizer : IMediaOrganizer
             .Where(FileHelper.IsSupportedMediaFileExtension);
         filesPaths = _duplicateDetector.MarkAndReturnUnseen(filesPaths);
 
-        _stopwatch.Restart();
-
-
         if (filesPaths.Any() && !await _console.Confirm($"This operation will copy '{filesPaths.Count()}' files to target directory. Continue?", _cancellationToken))
         {
             _console.WriteInfoLine("Organize canceled, have a nice day!");
@@ -103,6 +100,8 @@ public class MediaOrganizer : IMediaOrganizer
         }
 
         _console.WriteInfoLine("Copying files...");
+        _stopwatch.Restart();
+
         await Parallel.ForEachAsync(
             filesPaths,
             _parallelOptions,
