@@ -74,3 +74,13 @@ Options:
 Most common file types are supported (JPEG, PNG, HEIC, RAW, MP4, MOV, MKV...).
 
 [For the full list of supported types, click here.](./MeOrg/src/Constants.cs)
+
+## License
+
+MeOrg is free software, licensed under the [GNU General Public License v3.0](./LICENSE).
+
+Copyright (C) 2026 Johannes Palvanen
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the [LICENSE](./LICENSE) file for details.
