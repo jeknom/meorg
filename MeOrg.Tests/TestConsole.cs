@@ -5,17 +5,19 @@ namespace MeOrg.Tests;
 public class TestConsole : IConsole
 {
     private readonly ITestOutputHelper _testOutput;
-    private readonly OrganizeRunMetrics _metrics;
 
     public TestConsole(ITestOutputHelper testOutput, OrganizeRunMetrics metrics)
     {
         _testOutput = testOutput;
-        _metrics = metrics;
     }
 
     public Task<bool> Confirm(string question, CancellationToken cancellationToken)
     {
         return Task.FromResult(true);
+    }
+
+    public void SetYesToAll()
+    {
     }
 
     public void WriteErrorLine(string message)
@@ -40,14 +42,14 @@ public class TestConsole : IConsole
         _testOutput.WriteLine("\n");
     }
 
-    public void WriteReport()
+    public void WriteReport(OrganizeRunMetrics metrics)
     {
         _testOutput.WriteLine("\nREPORT");
-        _testOutput.WriteLine("Duplicates: {0}", _metrics.DuplicateCount.ToString());
-        _testOutput.WriteLine("Copied media: {0}", _metrics.CopyCount.ToString());
-        _testOutput.WriteLine("Target hashing time: {0}s", _metrics.TargetMediaHashGenerationTime.TotalSeconds.ToString());
-        _testOutput.WriteLine("Source processing time: {0}s", _metrics.SourceFileProcessingTime.TotalSeconds.ToString());
-        _testOutput.WriteLine("Total elapsed time: {0}s", _metrics.ElapsedSeconds.ToString());
+        _testOutput.WriteLine("Duplicates: {0}", metrics.DuplicateCount.ToString());
+        _testOutput.WriteLine("Copied media: {0}", metrics.CopyCount.ToString());
+        _testOutput.WriteLine("Target hashing time: {0}s", metrics.TargetMediaHashGenerationTime.TotalSeconds.ToString());
+        _testOutput.WriteLine("Source processing time: {0}s", metrics.SourceFileProcessingTime.TotalSeconds.ToString());
+        _testOutput.WriteLine("Total elapsed time: {0}s", metrics.ElapsedSeconds.ToString());
         _testOutput.WriteLine("\n");
     }
 }

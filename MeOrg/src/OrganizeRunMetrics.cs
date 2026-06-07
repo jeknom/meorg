@@ -20,7 +20,7 @@ public class OrganizeRunMetrics
         _stopwatch.Start();
     }
 
-    public void ReportTargetMediaHashGenerationTime(TimeSpan elapsed, int existingMediaFileCount)
+    public void ReportTargetMediaHashGenerationTime(TimeSpan elapsed)
     {
         TargetMediaHashGenerationTime = elapsed;
     }

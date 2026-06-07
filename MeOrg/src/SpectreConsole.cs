@@ -4,12 +4,10 @@ namespace MeOrg;
 
 public class SpectreConsole : IConsole
 {
-    private readonly OrganizeRunMetrics _metrics;
     private readonly bool _yesToAll;
 
-    public SpectreConsole(OrganizeRunMetrics metrics, bool yesToAll)
+    public SpectreConsole(bool yesToAll)
     {
-        _metrics = metrics;
         _yesToAll = yesToAll;
     }
 
@@ -54,18 +52,18 @@ public class SpectreConsole : IConsole
         AnsiConsole.WriteLine();
     }
 
-    public void WriteReport()
+    public void WriteReport(OrganizeRunMetrics metrics)
     {
         var table = new Table().RoundedBorder().BorderColor(Color.Aquamarine1).Title("Report");
 
         table.AddColumn("Metric");
         table.AddColumn("Value");
 
-        table.AddRow("Duplicates", _metrics.DuplicateCount.ToString());
-        table.AddRow("Copied media", _metrics.CopyCount.ToString());
-        table.AddRow("Target hashing time", _metrics.TargetMediaHashGenerationTime != default ? $"{_metrics.TargetMediaHashGenerationTime.TotalSeconds}s" : "Not reported");
-        table.AddRow("Source processing time", _metrics.SourceFileProcessingTime != default ? $"{_metrics.SourceFileProcessingTime.TotalSeconds}s" : "Not reported");
-        table.AddRow("Total elapsed time", $"{_metrics.ElapsedSeconds}s");
+        table.AddRow("Duplicates", metrics.DuplicateCount.ToString());
+        table.AddRow("Copied media", metrics.CopyCount.ToString());
+        table.AddRow("Target hashing time", metrics.TargetMediaHashGenerationTime != default ? $"{metrics.TargetMediaHashGenerationTime.TotalSeconds}s" : "Not reported");
+        table.AddRow("Source processing time", metrics.SourceFileProcessingTime != default ? $"{metrics.SourceFileProcessingTime.TotalSeconds}s" : "Not reported");
+        table.AddRow("Total elapsed time", $"{metrics.ElapsedSeconds}s");
 
         AnsiConsole.Write(table);
         AnsiConsole.WriteLine();

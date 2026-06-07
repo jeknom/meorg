@@ -1,3 +1,4 @@
+using MeOrg.Exceptions;
 using MeOrg.Extensions;
 using System.Diagnostics;
 
@@ -44,6 +45,12 @@ public class MediaOrganizer : IMediaOrganizer
         DirectoryInfo target,
         TimeSpan dayOffset)
     {
+        await target.PromptAndCreateIfMissingDirectory(_console, _cancellationToken);
+        if (!target.HasPermissionToWrite())
+        {
+            throw new ErrorExitException(ExitCode.PermissionDenied, "Missing permissions to write into the target directory.");
+        }
+
         Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(_cancellationToken), _cancellationToken);
 
         _stopwatch.Start();
@@ -77,7 +84,7 @@ public class MediaOrganizer : IMediaOrganizer
             .Where(FileHelper.IsSupportedMediaFileExtension);
         _duplicateDetector.MarkPathsAsSeen(targetMediaPaths);
 
-        _metrics.ReportTargetMediaHashGenerationTime(_stopwatch.Elapsed, _duplicateDetector.SeenCount);
+        _metrics.ReportTargetMediaHashGenerationTime(_stopwatch.Elapsed);
 
         _console.WriteInfoLine("Filtering duplicate source media...");
 
@@ -110,7 +117,7 @@ public class MediaOrganizer : IMediaOrganizer
 
         await writerTask;
 
-        _console.WriteReport();
+        _console.WriteReport(_metrics);
     }
 
     private async ValueTask OrganizeFile(

@@ -5,7 +5,7 @@ namespace MeOrg.Commands;
 
 public class OrganizeCommand : Command
 {
-    public OrganizeCommand() : base(
+    public OrganizeCommand(IConsole console, CancellationToken cancellationToken) : base(
         "organize",
         "Used to organize media from an unorganized source directory into target directory.")
     {
@@ -23,7 +23,6 @@ public class OrganizeCommand : Command
             Description = "Directory where to copy your organized media.",
             Required = true
         };
-        targetDirOption.Validators.Add(result => result.IsDirectoryPathWithWritePermissions("target"));
         Options.Add(targetDirOption);
 
         Option<bool> skipDedupe = new("--skip-dedupe")
@@ -50,20 +49,14 @@ public class OrganizeCommand : Command
         });
         Options.Add(dayOffsetHours);
 
-        Option<bool> yesToAll = new("--y")
-        {
-            Description = "Answer yes to all prompts automatically",
-            Required = false,
-            DefaultValueFactory = _ => false
-        };
-        Options.Add(yesToAll);
-
         SetAction(async (parseResult, ct) =>
         {
             var metrics = new OrganizeRunMetrics();
-            var console = new SpectreConsole(metrics, yesToAll: parseResult.GetValue(yesToAll));
             var writer = new BackgroundFileWriter(metrics, console);
-            var duplicateDetector = new DuplicateFileDetector(metrics, console);
+
+            IDuplicateFileDetector duplicateDetector = parseResult.GetValue(skipDedupe) ?
+                new NoOpDuplicateFileDetector() :
+                new DuplicateFileDetector(metrics, console);
             var organizer = new MediaOrganizer(writer, duplicateDetector, metrics, console, ct);
 
             await organizer.Organize(
@@ -71,6 +64,8 @@ public class OrganizeCommand : Command
                 target: parseResult.GetValue(targetDirOption)!,
                 dayOffset: TimeSpan.FromHours(parseResult.GetValue(dayOffsetHours))
             );
+
+            return 0;
         });
     }
 }
