@@ -45,15 +45,25 @@ public static class OptionParseResultExtensions
             return;
         }
 
-        string probe = Path.Combine(dirPath, $".meorg-write-test-{Guid.NewGuid():N}");
+        string probePath = Path.Combine(dirPath, $".meorg-write-test-{Guid.NewGuid():N}");
         try
         {
-            using (File.Create(probe)) { }
-            File.Delete(probe);
+            using (File.Create(probePath)) { }
         }
         catch (UnauthorizedAccessException)
         {
             result.AddError($"No write permission for '{kind}' directory '{dirPath}'");
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(probePath);
+            }
+            catch
+            {
+                // Doing my best to clean it up
+            }
         }
     }
 }
