@@ -13,11 +13,13 @@ public class OrganizeTests : IDisposable
     private readonly IDuplicateFileDetector _duplicateDetector;
     private readonly CancellationTokenSource _cts = new CancellationTokenSource();
     private readonly string _sourceBase = new(Path.Combine(AppContext.BaseDirectory, "TestFiles/Scenarios"));
-    private readonly DirectoryInfo _target = Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "TestTarget", Guid.NewGuid().ToString()));
+    private readonly string _targetPath = Path.Combine(AppContext.BaseDirectory, "TestTarget", Guid.NewGuid().ToString());
+    private readonly DirectoryInfo _target;
     private readonly Stopwatch _stopwatch = new Stopwatch();
 
     public OrganizeTests(ITestOutputHelper output)
     {
+        _target = Directory.CreateDirectory(_targetPath);
         _stopwatch.Start();
         _metrics = new OrganizeRunMetrics();
         _console = new TestConsole(output, _metrics);
@@ -30,6 +32,8 @@ public class OrganizeTests : IDisposable
     {
         _cts.Cancel();
         _stopwatch.Stop();
+
+        Directory.Delete(_targetPath, recursive: true);
     }
 
     [Fact]

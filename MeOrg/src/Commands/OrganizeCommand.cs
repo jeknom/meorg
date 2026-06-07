@@ -1,5 +1,5 @@
 using System.CommandLine;
-using MeOrg.Validators;
+using MeOrg.Extensions;
 
 namespace MeOrg.Commands;
 
