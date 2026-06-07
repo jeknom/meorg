@@ -21,7 +21,8 @@ public static class OptionParseResultExtensions
 
         try
         {
-            _ = Directory.EnumerateFileSystemEntries(dirPath).GetEnumerator().MoveNext();
+            using var enumerator = Directory.EnumerateFileSystemEntries(dirPath).GetEnumerator();
+            enumerator.MoveNext();
         }
         catch (UnauthorizedAccessException)
         {
