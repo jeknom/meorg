@@ -143,7 +143,7 @@ public class MediaOrganizer : IMediaOrganizer
     {
         string groupName = Constants.DEFAULT_SUBDIR_NAME;
 
-        if (FileHelper.TryExtractExifCreationDateTime(path, _console, out DateTime estimatedCreationDateTime) ||
+        if (FileHelper.TryExtractMediaMetadataCreationDateTime(path, _console, out DateTime estimatedCreationDateTime) ||
             FileHelper.TryExtractFileSystemGuesstimatedOriginalDateTime(path, _console, out estimatedCreationDateTime))
         {
             DateTime withOffset = estimatedCreationDateTime - dayOffset;

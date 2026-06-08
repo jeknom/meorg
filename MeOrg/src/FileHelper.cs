@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using MeOrg.Extensions;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.QuickTime;
@@ -26,40 +27,51 @@ public static partial class FileHelper
         return Path.Combine(dir, $"{fileNameWithoutExtension}{Path.GetExtension(currentPath)}");
     }
 
-    public static bool TryExtractExifCreationDateTime(string path, IConsole console, out DateTime createdDateTime)
+    public static bool TryExtractMediaMetadataCreationDateTime(string path, IConsole console, out DateTime createdDateTime)
     {
+        bool isVideo = Constants.SUPPORTED_VIDEO_EXTENSIONS.Contains(Path.GetExtension(path));
+
         try
         {
             IEnumerable<MetadataExtractor.Directory> directories = ImageMetadataReader.ReadMetadata(path);
 
-            var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out createdDateTime) ?? false)
+            if (isVideo)
             {
-                return true;
-            }
+                var qtHeaderDirectory = directories.OfType<QuickTimeMovieHeaderDirectory>().FirstOrDefault();
+                if (qtHeaderDirectory?.TryGetDateTime(QuickTimeMovieHeaderDirectory.TagCreated, out createdDateTime) ?? false)
+                {
+                    createdDateTime.SpecifyUtcAndConvertToLocal();
 
-            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out createdDateTime) ?? false)
+                    return true;
+                }
+
+                var qtTrackHeaderDirectory = directories.OfType<QuickTimeTrackHeaderDirectory>().FirstOrDefault();
+                if (qtTrackHeaderDirectory?.TryGetDateTime(QuickTimeTrackHeaderDirectory.TagCreated, out createdDateTime) ?? false)
+                {
+                    createdDateTime.SpecifyUtcAndConvertToLocal();
+
+                    return true;
+                }
+            }
+            else
             {
-                return true;
-            }
+                var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out createdDateTime) ?? false)
+                {
+                    return true;
+                }
 
-            if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTime, out createdDateTime) ?? false)
-            {
-                return true;
-            }
+                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out createdDateTime) ?? false)
+                {
+                    return true;
+                }
 
-            var gpsDirectory = directories.OfType<GpsDirectory>().FirstOrDefault();
-            if (gpsDirectory?.TryGetGpsDate(out createdDateTime) ?? false)
-            {
-                return true;
+                var subIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
+                if (subIfd0Directory?.TryGetDateTime(ExifIfd0Directory.TagDateTime, out createdDateTime) ?? false)
+                {
+                    return true;
+                }
             }
-
-            var quickTimeDirectory = directories.OfType<QuickTimeMetadataHeaderDirectory>().FirstOrDefault();
-            if (quickTimeDirectory?.TryGetDateTime(QuickTimeMetadataHeaderDirectory.TagCreationDate, out createdDateTime) ?? false)
-            {
-                return true;
-            }
-
         }
         catch (ImageProcessingException processingException)
         {
