@@ -40,7 +40,7 @@ public static partial class FileHelper
                 var qtHeaderDirectory = directories.OfType<QuickTimeMovieHeaderDirectory>().FirstOrDefault();
                 if (qtHeaderDirectory?.TryGetDateTime(QuickTimeMovieHeaderDirectory.TagCreated, out createdDateTime) ?? false)
                 {
-                    createdDateTime.SpecifyUtcAndConvertToLocal();
+                    createdDateTime = createdDateTime.SpecifyUtcAndConvertToLocal();
 
                     return true;
                 }
@@ -48,7 +48,7 @@ public static partial class FileHelper
                 var qtTrackHeaderDirectory = directories.OfType<QuickTimeTrackHeaderDirectory>().FirstOrDefault();
                 if (qtTrackHeaderDirectory?.TryGetDateTime(QuickTimeTrackHeaderDirectory.TagCreated, out createdDateTime) ?? false)
                 {
-                    createdDateTime.SpecifyUtcAndConvertToLocal();
+                    createdDateTime = createdDateTime.SpecifyUtcAndConvertToLocal();
 
                     return true;
                 }
