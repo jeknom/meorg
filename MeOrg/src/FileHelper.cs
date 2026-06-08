@@ -88,6 +88,23 @@ public static partial class FileHelper
         return false;
     }
 
+    public static bool TryExtractFileModifiedDateTime(string path, IConsole console, out DateTime createdDateTime)
+    {
+        try
+        {
+            createdDateTime = File.GetLastWriteTime(path);
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            console.WriteErrorLine($"Not authorized to read last modified time for '{path}'");
+        }
+
+        createdDateTime = default;
+
+        return false;
+    }
+
     public static bool IsSupportedMediaFileExtension(string path)
     {
         string ext = Path.GetExtension(path);

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using MeOrg.Extensions;
 using Xunit.Abstractions;
 
@@ -30,6 +31,8 @@ public class OrganizeTests : IDisposable
 
     public void Dispose()
     {
+        PrintTargetDirectoryFilepaths();
+
         _cts.Cancel();
         _stopwatch.Stop();
 
@@ -94,6 +97,19 @@ public class OrganizeTests : IDisposable
         await AssertFileExists(GetTargetPath("2026-05-23/TAKEN_AT_12_22.HEIC"));
     }
 
+    [Fact(Timeout = 10000)]
+    public async Task Organize_By_Modified_Date_Preceding_Created_Date()
+    {
+        DirectoryInfo source = new(Path.Combine(_sourceBase, "ModifiedDateBeforeCreationDate"));
+        Assert.True(FileHelper.TryExtractFileCreationDateTime(Path.Combine(source.FullName, "img.jpg"), _console, out DateTime testFileCreatedAt));
+        Assert.True(FileHelper.TryExtractFileModifiedDateTime(Path.Combine(source.FullName, "img.jpg"), _console, out DateTime testFileModifiedAt));
+        Assert.Equal("2018-03-03", testFileCreatedAt.ToMeorgDateString());
+        Assert.Equal("2010-06-06", testFileModifiedAt.ToMeorgDateString());
+
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
+        await AssertFileExists(GetTargetPath("2010-06-06/img.jpg"));
+    }
+
     private static async Task AssertFileExists(string filePath, int timeoutMs = 1000)
     {
         CancellationTokenSource cts = new();
@@ -128,5 +144,21 @@ public class OrganizeTests : IDisposable
     {
         string path = Path.Combine(_target.FullName, relativePath);
         return path;
+    }
+
+    private void PrintTargetDirectoryFilepaths()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append("Post test target directory files:");
+        sb.AppendLine();
+
+        foreach (string path in Directory.EnumerateFiles(_targetPath, "*", SearchOption.AllDirectories))
+        {
+            sb.AppendFormat("- {0}", path);
+        }
+
+        sb.AppendLine();
+
+        _console.WriteInfoLine(sb.ToString());
     }
 }
