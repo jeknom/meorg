@@ -77,6 +77,10 @@ public static partial class FileHelper
         {
             console.WriteException(processingException);
         }
+        catch (IOException ioException)
+        {
+            console.WriteException(ioException);
+        }
 
         createdDateTime = default;
 
