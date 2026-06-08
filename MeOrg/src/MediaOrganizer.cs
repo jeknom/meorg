@@ -147,7 +147,7 @@ public class MediaOrganizer : IMediaOrganizer
             FileHelper.TryExtractFileSystemGuesstimatedOriginalDateTime(path, _console, out estimatedCreationDateTime))
         {
             DateTime withOffset = estimatedCreationDateTime - dayOffset;
-            if (estimatedCreationDateTime.Day != withOffset.Day)
+            if (estimatedCreationDateTime.Date != withOffset.Date)
             {
                 estimatedCreationDateTime = withOffset;
             }
