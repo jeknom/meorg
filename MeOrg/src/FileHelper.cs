@@ -71,6 +71,32 @@ public static partial class FileHelper
         return false;
     }
 
+    public static bool TryExtractFileSystemGuesstimatedOriginalDateTime(string path, IConsole console, out DateTime guesstimate)
+    {
+        bool hasCreationTime = TryExtractFileCreationDateTime(path, console, out DateTime createTime);
+        bool hasModifiedTime = TryExtractFileModifiedDateTime(path, console, out DateTime modifyTime);
+
+        if (!hasModifiedTime && hasCreationTime)
+        {
+            guesstimate = createTime;
+        }
+        else if (!hasCreationTime && hasModifiedTime)
+        {
+            guesstimate = modifyTime;
+        }
+        else if (hasCreationTime && hasModifiedTime)
+        {
+            guesstimate = modifyTime < createTime ? modifyTime : createTime;
+        }
+        else
+        {
+            guesstimate = default;
+            return false;
+        }
+
+        return true;
+    }
+
     public static bool TryExtractFileCreationDateTime(string path, IConsole console, out DateTime createdDateTime)
     {
         try

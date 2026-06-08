@@ -141,27 +141,27 @@ public class MediaOrganizer : IMediaOrganizer
         TimeSpan dayOffset,
         CancellationToken cancellationToken)
     {
-        string subDirName = Constants.DEFAULT_SUBDIR_NAME;
+        string groupName = Constants.DEFAULT_SUBDIR_NAME;
 
-        if (FileHelper.TryExtractExifCreationDateTime(path, _console, out DateTime creationDateTime) ||
-            FileHelper.TryExtractFileCreationDateTime(path, _console, out creationDateTime))
+        if (FileHelper.TryExtractExifCreationDateTime(path, _console, out DateTime estimatedCreationDateTime) ||
+            FileHelper.TryExtractFileSystemGuesstimatedOriginalDateTime(path, _console, out estimatedCreationDateTime))
         {
-            DateTime withOffset = creationDateTime - dayOffset;
-            if (creationDateTime.Day != withOffset.Day)
+            DateTime withOffset = estimatedCreationDateTime - dayOffset;
+            if (estimatedCreationDateTime.Day != withOffset.Day)
             {
-                creationDateTime = withOffset;
+                estimatedCreationDateTime = withOffset;
             }
 
-            subDirName = creationDateTime.ToMeorgDateString();
+            groupName = estimatedCreationDateTime.ToMeorgDateString();
         }
 
-        if (_suffixedTargetDirectoryLookup.TryGetValue(subDirName, out string? suffixedSubDirName))
+        if (_suffixedTargetDirectoryLookup.TryGetValue(groupName, out string? suffixedSubDirName))
         {
-            subDirName = suffixedSubDirName;
+            groupName = suffixedSubDirName;
         }
 
         string fileName = Path.GetFileName(path);
-        string destinationPath = Path.Combine(target.FullName, subDirName, fileName);
+        string destinationPath = Path.Combine(target.FullName, groupName, fileName);
         await _writer.TryAddFile(fromPath: path, toPath: destinationPath, cancellationToken);
     }
 }
