@@ -16,7 +16,9 @@ public class BackgroundFileWriter : IBackgroundFileWriter
     private readonly OrganizeRunMetrics _metrics;
     private readonly IConsole _console;
     private readonly IFileAccess _fileAccess;
-    private bool isStarted;
+    private const int MIN_FILES_FOR_PROGRESS_REPORT = 200;
+    private bool _isStarted;
+    private bool _shouldReportProgress;
 
     public BackgroundFileWriter(OrganizeRunMetrics metrics, IConsole console, IFileAccess fileAccess)
     {
@@ -27,12 +29,14 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 
     public async Task WriteFilesContinuously(CancellationToken cancellationToken)
     {
-        if (isStarted)
+        if (_isStarted)
         {
             throw new InvalidOperationException("Writer has already been started!");
         }
 
-        isStarted = true;
+        _isStarted = true;
+
+        _shouldReportProgress = _metrics.TotalFileCount >= MIN_FILES_FOR_PROGRESS_REPORT;
 
         await foreach (var (from, to) in _fileChannel.Reader.ReadAllAsync(cancellationToken))
         {
@@ -67,6 +71,16 @@ public class BackgroundFileWriter : IBackgroundFileWriter
             catch (Exception ex)
             {
                 _console.WriteException(ex);
+            }
+            finally
+            {
+                int currentStep = _metrics.CopyCount * 10 / _metrics.TotalFileCount;
+                int previousStep = (_metrics.CopyCount - 1) * 10 / _metrics.TotalFileCount;
+
+                if (_shouldReportProgress && currentStep > previousStep)
+                {
+                    _console.WriteInfoLine($"{_metrics.CopyCount}/{_metrics.TotalFileCount} files copied...");
+                }
             }
         }
     }

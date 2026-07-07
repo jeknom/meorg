@@ -67,8 +67,6 @@ public class MediaOrganizer : IMediaOrganizer
             throw new ErrorExitException(ExitCode.PermissionDenied, "Missing permissions to write into the target directory.");
         }
 
-        Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(_cancellationToken), _cancellationToken);
-
         _stopwatch.Start();
         _console.WriteInfoLine("Populating pre-existing target directory lookup...");
 
@@ -104,22 +102,25 @@ public class MediaOrganizer : IMediaOrganizer
 
         _console.WriteInfoLine("Filtering duplicate source media...");
 
-        IEnumerable<string> filesPaths = Directory
+        IEnumerable<string> supportedFiles = Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
             .Where(FileHelper.IsSupportedMediaFileExtension);
-        filesPaths = _duplicateDetector.MarkAndReturnUnseen(filesPaths);
+        List<string> unseenFiles = _duplicateDetector.MarkAndReturnUnseen(supportedFiles);
 
-        if (filesPaths.Any() && !await _console.Confirm($"This operation will copy '{filesPaths.Count()}' files to target directory. Continue?", _cancellationToken))
+        if (unseenFiles.Count == 0 && !await _console.Confirm($"This operation will copy '{unseenFiles.Count}' files to target directory. Continue?", _cancellationToken))
         {
             _console.WriteInfoLine("Organize canceled, have a nice day!");
             return;
         }
 
+        _metrics.ReportTotalFileCount(unseenFiles.Count);
+
         _console.WriteInfoLine("Copying files...");
         _stopwatch.Restart();
 
+        Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(_cancellationToken), _cancellationToken);
         await Parallel.ForEachAsync(
-            filesPaths,
+            unseenFiles,
             _parallelOptions,
             (path, ct) => OrganizeFile(path, target, dayOffset, ct));
 

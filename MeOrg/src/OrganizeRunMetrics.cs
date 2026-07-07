@@ -7,7 +7,7 @@ public class OrganizeRunMetrics
     public int CopyCount => _copyCount;
     public int DuplicateCount => _duplicateCount;
     public double ElapsedSeconds => _stopwatch.Elapsed.TotalSeconds;
-    public int TotalFileCount { get; set; }
+    public int TotalFileCount { get; private set; }
     public TimeSpan TargetMediaHashGenerationTime { get; private set; }
     public TimeSpan SourceFileProcessingTime { get; private set; }
 
@@ -29,6 +29,11 @@ public class OrganizeRunMetrics
     public void ReportSourceFileProcessingTime(TimeSpan elapsed)
     {
         SourceFileProcessingTime = elapsed;
+    }
+
+    public void ReportTotalFileCount(int totalFileCount)
+    {
+        TotalFileCount = totalFileCount;
     }
 
     public void ReportFileCopied()
