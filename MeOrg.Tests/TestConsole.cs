@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Xunit.Abstractions;
 
 namespace MeOrg.Tests;
@@ -5,6 +6,7 @@ namespace MeOrg.Tests;
 public class TestConsole : IConsole
 {
     private readonly ITestOutputHelper _testOutput;
+    public ConcurrentStack<string> Logs { get; private set; } = new();
 
     public TestConsole(ITestOutputHelper testOutput, OrganizeRunMetrics metrics)
     {
@@ -22,16 +24,20 @@ public class TestConsole : IConsole
 
     public void WriteErrorLine(string message)
     {
+        Logs.Push(message);
         _testOutput.WriteLine($"{DateTime.Now:HH:mm:ss:ff} - Error: {message}");
     }
 
     public void WriteException(Exception ex)
     {
-        _testOutput.WriteLine(ex.ToString());
+        string exStr = ex.ToString();
+        Logs.Push(exStr);
+        _testOutput.WriteLine(exStr);
     }
 
     public void WriteInfoLine(string message)
     {
+        Logs.Push(message);
         _testOutput.WriteLine($"{DateTime.Now:HH:mm:ss:ff} - Info: {message}");
     }
 
