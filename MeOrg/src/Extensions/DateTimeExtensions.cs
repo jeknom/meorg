@@ -8,7 +8,6 @@ public static class DateTimeExtensions
 
     public static DateTime SpecifyUtcAndConvertToLocal(this DateTime dateTime)
     {
-        DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-        return dateTime.ToLocalTime();
+        return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc).ToLocalTime();
     }
 }
