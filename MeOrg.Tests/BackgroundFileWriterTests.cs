@@ -25,7 +25,7 @@ public class BackgroundFileWriterTests
         Assert.Equal("Writer has already been started!", exception.Message);
     }
 
-    [Fact()]
+    [Fact(Timeout = 10000)]
     public async Task Writer_Logs_Progress_In_10_Percent_Steps()
     {
         _metrics.ReportTotalFileCount(1000);
@@ -51,5 +51,22 @@ public class BackgroundFileWriterTests
         Assert.Equal("800/1000 files copied...", progressLogs[2]);
         Assert.Equal("900/1000 files copied...", progressLogs[1]);
         Assert.Equal("1000/1000 files copied...", progressLogs[0]);
+    }
+
+    [Fact(Timeout = 10000)]
+    public async Task Writer_Skips_Progress_Logging_When_Less_Than_200_Files()
+    {
+        _metrics.ReportTotalFileCount(199);
+        Task writerTask = _writer.WriteFilesContinuously(CancellationToken.None);
+        for (int i = 0; i < 199; i++)
+        {
+            Assert.True(await _writer.TryAddFile($"test-from-path-{i}", $"test-to-path-{i}", CancellationToken.None));
+        }
+
+        _writer.Shutdown();
+        await writerTask;
+
+        List<string> progressLogs = _console.Logs.Where(log => log.EndsWith("files copied...")).ToList();
+        Assert.Empty(progressLogs);
     }
 }
