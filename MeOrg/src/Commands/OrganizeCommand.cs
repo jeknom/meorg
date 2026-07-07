@@ -52,7 +52,8 @@ public class OrganizeCommand : Command
         SetAction(async (parseResult, ct) =>
         {
             var metrics = new OrganizeRunMetrics();
-            var writer = new BackgroundFileWriter(metrics, console);
+            var fileAccess = new FileAccess();
+            var writer = new BackgroundFileWriter(metrics, console, fileAccess);
 
             IDuplicateFileDetector duplicateDetector = parseResult.GetValue(skipDedupe) ?
                 new NoOpDuplicateFileDetector() :

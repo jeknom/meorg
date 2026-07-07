@@ -15,12 +15,14 @@ public class BackgroundFileWriter : IBackgroundFileWriter
         Channel.CreateBounded<(string fromPath, string toPath)>(500);
     private readonly OrganizeRunMetrics _metrics;
     private readonly IConsole _console;
+    private readonly IFileAccess _fileAccess;
     private bool isStarted;
 
-    public BackgroundFileWriter(OrganizeRunMetrics metrics, IConsole console)
+    public BackgroundFileWriter(OrganizeRunMetrics metrics, IConsole console, IFileAccess fileAccess)
     {
         _metrics = metrics;
         _console = console;
+        _fileAccess = fileAccess;
     }
 
     public async Task WriteFilesContinuously(CancellationToken cancellationToken)
@@ -37,14 +39,14 @@ public class BackgroundFileWriter : IBackgroundFileWriter
             try
             {
                 string? directory = Path.GetDirectoryName(to);
-                if (directory != null && !Directory.Exists(directory))
+                if (directory != null && !_fileAccess.DirectoryExists(directory))
                 {
-                    Directory.CreateDirectory(directory);
+                    _fileAccess.CreateDirectory(directory);
                 }
 
-                if (!File.Exists(to))
+                if (!_fileAccess.FileExists(to))
                 {
-                    File.Copy(from, to);
+                    _fileAccess.CopyFile(from, to);
 
                     _metrics.ReportFileCopied();
 
@@ -56,9 +58,9 @@ public class BackgroundFileWriter : IBackgroundFileWriter
                 {
                     suffixedName = FileHelper.GetFilepathWithIncrementedNumericalSuffix(suffixedName);
                 }
-                while (File.Exists(suffixedName));
+                while (_fileAccess.FileExists(suffixedName));
 
-                File.Copy(from, suffixedName);
+                _fileAccess.CopyFile(from, suffixedName);
 
                 _metrics.ReportFileCopied();
             }
