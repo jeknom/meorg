@@ -38,7 +38,7 @@ public static partial class FileHelper
             if (isVideo)
             {
                 var qtHeaderDirectory = directories.OfType<QuickTimeMovieHeaderDirectory>().FirstOrDefault();
-                if (qtHeaderDirectory?.TryGetDateTime(QuickTimeMovieHeaderDirectory.TagCreated, out createdDateTime) ?? false)
+                if (qtHeaderDirectory != null && qtHeaderDirectory.TryGetDateTime(QuickTimeMovieHeaderDirectory.TagCreated, out createdDateTime))
                 {
                     createdDateTime = createdDateTime.SpecifyUtcAndConvertToLocal();
 
@@ -46,7 +46,7 @@ public static partial class FileHelper
                 }
 
                 var qtTrackHeaderDirectory = directories.OfType<QuickTimeTrackHeaderDirectory>().FirstOrDefault();
-                if (qtTrackHeaderDirectory?.TryGetDateTime(QuickTimeTrackHeaderDirectory.TagCreated, out createdDateTime) ?? false)
+                if (qtTrackHeaderDirectory != null && qtTrackHeaderDirectory.TryGetDateTime(QuickTimeTrackHeaderDirectory.TagCreated, out createdDateTime))
                 {
                     createdDateTime = createdDateTime.SpecifyUtcAndConvertToLocal();
 
@@ -56,18 +56,18 @@ public static partial class FileHelper
             else
             {
                 var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out createdDateTime) ?? false)
+                if (subIfdDirectory != null && subIfdDirectory.TryGetDateTime(ExifDirectoryBase.TagDateTimeOriginal, out createdDateTime))
                 {
                     return true;
                 }
 
-                if (subIfdDirectory?.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out createdDateTime) ?? false)
+                if (subIfdDirectory != null && subIfdDirectory.TryGetDateTime(ExifDirectoryBase.TagDateTimeDigitized, out createdDateTime))
                 {
                     return true;
                 }
 
                 var subIfd0Directory = directories.OfType<ExifIfd0Directory>().FirstOrDefault();
-                if (subIfd0Directory?.TryGetDateTime(ExifIfd0Directory.TagDateTime, out createdDateTime) ?? false)
+                if (subIfd0Directory != null && subIfd0Directory.TryGetDateTime(ExifIfd0Directory.TagDateTime, out createdDateTime))
                 {
                     return true;
                 }
@@ -111,6 +111,11 @@ public static partial class FileHelper
         }
 
         return true;
+    }
+
+    public static bool IsDateSuspectedDefaultValue(DateTime dateTime)
+    {
+        return dateTime == default || Constants.KNOWN_DEFAULT_DATES.Contains(DateOnly.FromDateTime(dateTime));
     }
 
     public static bool TryExtractFileCreationDateTime(string path, IConsole console, out DateTime createdDateTime)

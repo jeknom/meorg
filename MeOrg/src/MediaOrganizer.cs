@@ -142,27 +142,44 @@ public class MediaOrganizer : IMediaOrganizer
         TimeSpan dayOffset,
         CancellationToken cancellationToken)
     {
-        string groupName = Constants.DEFAULT_SUBDIR_NAME;
-
-        if (FileHelper.TryExtractMediaMetadataCreationDateTime(path, _console, out DateTime estimatedCreationDateTime) ||
-            FileHelper.TryExtractFileSystemGuesstimatedOriginalDateTime(path, _console, out estimatedCreationDateTime))
-        {
-            DateTime withOffset = estimatedCreationDateTime - dayOffset;
-            if (estimatedCreationDateTime.Date != withOffset.Date)
-            {
-                estimatedCreationDateTime = withOffset;
-            }
-
-            groupName = estimatedCreationDateTime.ToMeorgDateString();
-        }
-
-        if (_suffixedTargetDirectoryLookup.TryGetValue(groupName, out string? suffixedSubDirName))
-        {
-            groupName = suffixedSubDirName;
-        }
-
+        string groupName = ResolveTargetDirectoryName(path, dayOffset);
         string fileName = Path.GetFileName(path);
         string destinationPath = Path.Combine(target.FullName, groupName, fileName);
         await _writer.TryAddFile(fromPath: path, toPath: destinationPath, cancellationToken);
+    }
+
+    private string ResolveTargetDirectoryName(string sourcePath, TimeSpan dayOffset)
+    {
+        DateTime createdAt = default;
+        if (FileHelper.TryExtractMediaMetadataCreationDateTime(sourcePath, _console, out DateTime metadataDate) &&
+            !FileHelper.IsDateSuspectedDefaultValue(metadataDate))
+        {
+            createdAt = metadataDate;
+        }
+        else if (FileHelper.TryExtractFileSystemGuesstimatedOriginalDateTime(sourcePath, _console, out DateTime filesystemDate) &&
+                !FileHelper.IsDateSuspectedDefaultValue(filesystemDate))
+        {
+            createdAt = filesystemDate;
+        }
+
+        if (createdAt == default)
+        {
+            return Constants.DEFAULT_SUBDIR_NAME;
+        }
+
+        DateTime withOffset = createdAt - dayOffset;
+        if (createdAt.Date != withOffset.Date)
+        {
+            createdAt = withOffset;
+        }
+
+        string result = createdAt.ToMeorgDateString();
+
+        if (_suffixedTargetDirectoryLookup.TryGetValue(result, out string? suffixedSubDirName))
+        {
+            result = suffixedSubDirName;
+        }
+
+        return result;
     }
 }

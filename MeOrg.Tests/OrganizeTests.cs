@@ -110,6 +110,27 @@ public class OrganizeTests : IDisposable
         await AssertFileExists(GetTargetPath("2010-06-06/img.jpg"));
     }
 
+    [Fact]
+    public async Task Default_Metadata_Creation_Date_Fallback_To_Filesystem_Date()
+    {
+        DirectoryInfo source = new(Path.Combine(_sourceBase, "DefaultMetadataDate"));
+        Assert.True(FileHelper.TryExtractMediaMetadataCreationDateTime(Path.Combine(source.FullName, "exif-1904-01-01.mp4"), _console, out DateTime _));
+
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
+        await AssertFileExists(GetTargetPath("2021-04-10/exif-1904-01-01.mp4"));
+    }
+
+    [Fact]
+    public async Task File_With_Only_Default_Creation_Dates_Organizes_To_Misc()
+    {
+        DirectoryInfo source = new(Path.Combine(_sourceBase, "AllDefaultCreationDate"));
+        Assert.True(FileHelper.TryExtractMediaMetadataCreationDateTime(Path.Combine(source.FullName, "all-default.jpg"), _console, out DateTime _));
+        Assert.True(FileHelper.TryExtractFileCreationDateTime(Path.Combine(source.FullName, "all-default.jpg"), _console, out DateTime _));
+
+        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
+        await AssertFileExists(GetTargetPath("Misc/all-default.jpg"));
+    }
+
     private static async Task AssertFileExists(string filePath, int timeoutMs = 1000)
     {
         CancellationTokenSource cts = new();
@@ -155,9 +176,8 @@ public class OrganizeTests : IDisposable
         foreach (string path in Directory.EnumerateFiles(_targetPath, "*", SearchOption.AllDirectories))
         {
             sb.AppendFormat("- {0}", path);
+            sb.AppendLine();
         }
-
-        sb.AppendLine();
 
         _console.WriteInfoLine(sb.ToString());
     }
