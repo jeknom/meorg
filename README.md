@@ -42,7 +42,7 @@ You can download a binary matching your OS from the [Github releases page](https
 **Prerequisite:** [Install .NET 10](https://dotnet.microsoft.com/en-us/download)
 
 - Navigate to the app project: `cd ./MeOrg`.
-- **Generate executables for all platforms:** Execute the `create-bins.sh` script
+- **Generate executables for all platforms:** Execute the `create-bins.sh <output-dir>` script. It will generate executables for all platforms and then make copies in the provided path.
 - **Generate executable for specific platform** `dotnet publish -c Release -r <runtime-id> --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true`
   - Replace \<runtime-id\> with your target platform: `win-x64` — Windows 64-bit, `linux-x64` — Linux 64-bit, `osx-x64` — macOS Intel, `osx-arm64` — macOS Apple Silicon
 - Create symlink (at-least on Mac & Linux): `sudo ln -s <absolute-path-to-repo>/meorg/MeOrg/bin/Release/net10.0/<your-target-platform>/publish/MeOrg /usr/local/bin/meorg`
