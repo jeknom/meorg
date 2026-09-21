@@ -4,9 +4,9 @@ This is a command line tool that deduplicates and organizes media files from one
 
 The tool recursively finds all media files from a provided source directory and a target directory. By default, the app will generate a sampled hash for each file to detect if it already exists in the target directory. If the file already exists, it will not be copied to the target.
 
-The creation time of each file is inferred from either EXIF metadata or file system metadata if EXIF data is not available. The files are then organized into directories by the date they were created. By default, if a file is taken 4 hours after midnight, it will be organized into the previous day's directory. This is done with the assumption that if you have been partying past midnight, you still want those files to be organized under the directory where you mentally consider them to be within the same day.
+The creation time of each file is inferred from either EXIF metadata or file system metadata, if EXIF data is not available. The files are then organized into directories by year-month date they were created.
 
-After the files have been organized you can manually add suffixes by renaming directories to quickly recognize specific days. Even if you run the tool to the same target again, it will use the directory regardless if it has a suffix or not. However, if multiple directories prefixed with the date exist, the one without the suffix will be used as the default.
+After the files have been organized you can manually add suffixes by renaming directories to quickly recognize specific months. Even if you run the tool to the same target again, it will use the directory regardless if it has a suffix or not. However, if multiple directories prefixed with the date exist, the one without the suffix will be used as the default.
 
 ### Example 
 
@@ -26,11 +26,11 @@ This kind of target will be generated:
 
 ```
 my-organized-media
-├── 2023-05-05
+├── 2023-05
 │   └── IMG_4321.jpg
-├── 2023-06-18
+├── 2023-06
 │   └── IMG_1234.jpg
-└── 2024-09-20
+└── 2024-09
     └── VID_1234.mp4
 ```
 
@@ -61,15 +61,10 @@ Usage:
   MeOrg organize [options]
 
 Options:
-  --source <source> (REQUIRED)           Unorganized media source directory.
-  --target <target> (REQUIRED)           Directory where to copy your organized media.
-  --skip-dedupe                          Disables duplicate detection.
-  --day-offset-hours <day-offset-hours>  Number of hours past midnight that still 
-                                         count as the previous day. With the default 
-                                         of 4, a photo taken at 3AM is filed under the 
-                                         previous day's directory instead of the 
-                                         current one. [default: 4]
-  -?, -h, --help                         Show help and usage information
+  --source <source> (REQUIRED)  Unorganized media source directory.
+  --target <target> (REQUIRED)  Directory where to copy your organized media.
+  --skip-dedupe                 Disables duplicate detection.
+  -?, -h, --help                Show help and usage information
 ```
 
 ## Supported media types

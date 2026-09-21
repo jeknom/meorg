@@ -21,14 +21,14 @@ public class FileNameHelperTests
     }
 
     [Theory]
-    [InlineData("quick-time.MOV", "2024-09-21")]
-    [InlineData("exif-create-date.HEIC", "2026-04-25")]
+    [InlineData("quick-time.MOV", "2024-09")]
+    [InlineData("exif-create-date.HEIC", "2026-04")]
     // This one has the exif create date stripped and it should pull the exif modified date instead
-    [InlineData("exif-create-date-stripped.HEIC", "2026-04-25")]
+    [InlineData("exif-create-date-stripped.HEIC", "2026-04")]
     public async Task Test_Extract_Creation_Date_Time_Metadata(string filename, string expectedDate)
     {
         string path = Path.Combine(AppContext.BaseDirectory, "TestFiles/CreationTimeExtraction", filename);
         Assert.True(FileHelper.TryExtractMediaMetadataCreationDateTime(path, _console, out DateTime createdDateTime));
-        Assert.Equal(expectedDate, createdDateTime.ToMeorgDateString());
+        Assert.Equal(expectedDate, createdDateTime.ToYearMonthDate());
     }
 }

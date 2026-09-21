@@ -33,22 +33,6 @@ public class OrganizeCommand : Command
         };
         Options.Add(skipDedupe);
 
-        Option<int> dayOffsetHours = new("--day-offset-hours")
-        {
-            Description = "Number of hours past midnight that still count as the previous day. With the default of 4, a photo taken at 3AM is filed under the previous day's directory instead of the current one.",
-            Required = false,
-            DefaultValueFactory = _ => 4,
-        };
-        dayOffsetHours.Validators.Add((result) =>
-        {
-            int value = result.GetValueOrDefault<int>();
-            if (value < 0)
-            {
-                result.AddError($"--day-offset-hours must be >= 0, got {value}.");
-            }
-        });
-        Options.Add(dayOffsetHours);
-
         SetAction(async (parseResult, ct) =>
         {
             var metrics = new OrganizeRunMetrics();
@@ -62,8 +46,7 @@ public class OrganizeCommand : Command
 
             await organizer.Organize(
                 source: parseResult.GetValue(sourceDirOption)!,
-                target: parseResult.GetValue(targetDirOption)!,
-                dayOffset: TimeSpan.FromHours(parseResult.GetValue(dayOffsetHours))
+                target: parseResult.GetValue(targetDirOption)!
             );
 
             return 0;

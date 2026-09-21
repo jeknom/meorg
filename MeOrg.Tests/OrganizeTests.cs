@@ -43,19 +43,19 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Supported_Files()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "SupportedFiles"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
-        await AssertFileExists(GetTargetPath("2026-04-25/IMG_4146.HEIC"));
-        await AssertFileExists(GetTargetPath("2026-04-26/IMG_4158.MOV"));
-        await AssertFileExists(GetTargetPath("2026-04-26/butterfly.webp"));
-        await AssertFileExists(GetTargetPath("2026-04-26/giraffe.jpg"));
-        await AssertFileExists(GetTargetPath("2026-04-26/jumble.png"));
+        await _mediaOrganizer.Organize(source, _target);
+        await AssertFileExists(GetTargetPath("2026-04/IMG_4146.HEIC"));
+        await AssertFileExists(GetTargetPath("2026-04/IMG_4158.MOV"));
+        await AssertFileExists(GetTargetPath("2026-04/butterfly.webp"));
+        await AssertFileExists(GetTargetPath("2026-04/giraffe.jpg"));
+        await AssertFileExists(GetTargetPath("2026-04/jumble.png"));
     }
 
     [Fact]
     public async Task Organize_Does_Not_Copy_Unsupported_Files()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "UnsupportedFiles"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
+        await _mediaOrganizer.Organize(source, _target);
         await AssertFileDoesNotExistAfterDelay(GetTargetPath("Misc/some.txt"));
     }
 
@@ -63,38 +63,27 @@ public class OrganizeTests : IDisposable
     public async Task Organize_Namesakes()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Namesakes"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
-        await AssertFileExists(GetTargetPath("2026-05-24/IMG_NAMESAKE.HEIC"));
-        await AssertFileExists(GetTargetPath("2026-05-24/IMG_NAMESAKE (2).HEIC"));
+        await _mediaOrganizer.Organize(source, _target);
+        await AssertFileExists(GetTargetPath("2026-05/IMG_NAMESAKE.HEIC"));
+        await AssertFileExists(GetTargetPath("2026-05/IMG_NAMESAKE (2).HEIC"));
     }
 
     [Fact(Timeout = 10000)]
     public async Task Organize_Duplicates()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "Duplicates"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
-        await AssertFileExists(GetTargetPath("2026-05-24/IMG_DUPLICATE_A.HEIC"));
-        await AssertFileDoesNotExistAfterDelay(GetTargetPath("2026-05-24/IMG_DUPLICATE_B.HEIC"));
+        await _mediaOrganizer.Organize(source, _target);
+        await AssertFileExists(GetTargetPath("2026-05/IMG_DUPLICATE_A.HEIC"));
+        await AssertFileDoesNotExistAfterDelay(GetTargetPath("2026-05/IMG_DUPLICATE_B.HEIC"));
     }
 
     [Fact(Timeout = 10000)]
     public async Task Organize_Supports_Directory_Suffix_In_Existing_Target()
     {
         DirectoryInfo source = new(Path.Combine(_sourceBase, "TargetExistsWithSuffix"));
-        Directory.CreateDirectory(GetTargetPath("2026-05-17 test suffix"));
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
-        await AssertFileExists(GetTargetPath("2026-05-17 test suffix/giraffe.jpg"));
-    }
-
-    [Fact(Timeout = 10000)]
-    public async Task Organize_Respects_Day_Offset()
-    {
-        DirectoryInfo source = new(Path.Combine(_sourceBase, "RespectDayOffset"));
-        Assert.True(FileHelper.TryExtractMediaMetadataCreationDateTime(Path.Combine(source.FullName, "TAKEN_AT_12_22.HEIC"), _console, out DateTime testFileCreatedAt));
-        Assert.Equal("2026-05-24", testFileCreatedAt.ToMeorgDateString());
-
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.FromHours(13));
-        await AssertFileExists(GetTargetPath("2026-05-23/TAKEN_AT_12_22.HEIC"));
+        Directory.CreateDirectory(GetTargetPath("2026-05 test suffix"));
+        await _mediaOrganizer.Organize(source, _target);
+        await AssertFileExists(GetTargetPath("2026-05 test suffix/giraffe.jpg"));
     }
 
     [Fact(Timeout = 10000)]
@@ -103,11 +92,11 @@ public class OrganizeTests : IDisposable
         DirectoryInfo source = new(Path.Combine(_sourceBase, "ModifiedDateBeforeCreationDate"));
         Assert.True(FileHelper.TryExtractFileCreationDateTime(Path.Combine(source.FullName, "img.jpg"), _console, out DateTime testFileCreatedAt));
         Assert.True(FileHelper.TryExtractFileModifiedDateTime(Path.Combine(source.FullName, "img.jpg"), _console, out DateTime testFileModifiedAt));
-        Assert.Equal("2018-03-03", testFileCreatedAt.ToMeorgDateString());
-        Assert.Equal("2010-06-06", testFileModifiedAt.ToMeorgDateString());
+        Assert.Equal("2018-03", testFileCreatedAt.ToYearMonthDate());
+        Assert.Equal("2010-06", testFileModifiedAt.ToYearMonthDate());
 
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
-        await AssertFileExists(GetTargetPath("2010-06-06/img.jpg"));
+        await _mediaOrganizer.Organize(source, _target);
+        await AssertFileExists(GetTargetPath("2010-06/img.jpg"));
     }
 
     [Fact]
@@ -116,8 +105,8 @@ public class OrganizeTests : IDisposable
         DirectoryInfo source = new(Path.Combine(_sourceBase, "DefaultMetadataDate"));
         Assert.True(FileHelper.TryExtractMediaMetadataCreationDateTime(Path.Combine(source.FullName, "exif-1904-01-01.mp4"), _console, out DateTime _));
 
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
-        await AssertFileExists(GetTargetPath("2021-04-10/exif-1904-01-01.mp4"));
+        await _mediaOrganizer.Organize(source, _target);
+        await AssertFileExists(GetTargetPath("2021-04/exif-1904-01-01.mp4"));
     }
 
     [Fact]
@@ -127,7 +116,7 @@ public class OrganizeTests : IDisposable
         Assert.True(FileHelper.TryExtractMediaMetadataCreationDateTime(Path.Combine(source.FullName, "all-default.jpg"), _console, out DateTime _));
         Assert.True(FileHelper.TryExtractFileCreationDateTime(Path.Combine(source.FullName, "all-default.jpg"), _console, out DateTime _));
 
-        await _mediaOrganizer.Organize(source, _target, dayOffset: TimeSpan.Zero);
+        await _mediaOrganizer.Organize(source, _target);
         await AssertFileExists(GetTargetPath("Misc/all-default.jpg"));
     }
 
@@ -145,7 +134,6 @@ public class OrganizeTests : IDisposable
 
             await Task.Delay(100);
         }
-
         Assert.Fail($"Asserting file '{filePath}' exists timed out.");
     }
 

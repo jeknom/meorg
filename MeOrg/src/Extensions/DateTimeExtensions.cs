@@ -4,7 +4,7 @@ namespace MeOrg.Extensions;
 
 public static class DateTimeExtensions
 {
-    public static string ToMeorgDateString(this DateTime dateTime) => dateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    public static string ToYearMonthDate(this DateTime dateTime) => dateTime.ToString(Constants.YEAR_MONTH_DATE_FORMAT, CultureInfo.InvariantCulture);
 
     public static DateTime SpecifyUtcAndConvertToLocal(this DateTime dateTime)
     {

@@ -22,7 +22,7 @@ namespace MeOrg;
 
 public interface IMediaOrganizer
 {
-    Task Organize(DirectoryInfo source, DirectoryInfo target, TimeSpan dayOffset);
+    Task Organize(DirectoryInfo source, DirectoryInfo target);
 }
 
 public class MediaOrganizer : IMediaOrganizer
@@ -58,8 +58,7 @@ public class MediaOrganizer : IMediaOrganizer
 
     public async Task Organize(
         DirectoryInfo source,
-        DirectoryInfo target,
-        TimeSpan dayOffset)
+        DirectoryInfo target)
     {
         await target.PromptAndCreateIfMissingDirectory(_console, _cancellationToken);
         if (!target.HasPermissionToWrite())
@@ -78,11 +77,12 @@ public class MediaOrganizer : IMediaOrganizer
 
         var exactDirNames = new HashSet<string>(subDirNames, StringComparer.Ordinal);
 
+        int yearMonthDateFormatLength = Constants.YEAR_MONTH_DATE_FORMAT.Length;
         foreach (string dirName in subDirNames)
         {
-            if (dirName.Length >= 10 && DateOnly.TryParseExact(dirName[..10], "yyyy-MM-dd", out _))
+            if (dirName.Length >= yearMonthDateFormatLength && DateOnly.TryParseExact(dirName[..yearMonthDateFormatLength], Constants.YEAR_MONTH_DATE_FORMAT, out _))
             {
-                string prefix = dirName[..10];
+                string prefix = dirName[..yearMonthDateFormatLength];
                 // If a directory matching the prefix exactly exists, it wins, don't redirect.
                 if (!exactDirNames.Contains(prefix))
                 {
@@ -122,7 +122,7 @@ public class MediaOrganizer : IMediaOrganizer
         await Parallel.ForEachAsync(
             unseenFiles,
             _parallelOptions,
-            (path, ct) => OrganizeFile(path, target, dayOffset, ct));
+            (path, ct) => OrganizeFile(path, target, ct));
 
         _metrics.ReportSourceFileProcessingTime(_stopwatch.Elapsed);
 
@@ -139,16 +139,15 @@ public class MediaOrganizer : IMediaOrganizer
     private async ValueTask OrganizeFile(
         string path,
         DirectoryInfo target,
-        TimeSpan dayOffset,
         CancellationToken cancellationToken)
     {
-        string groupName = ResolveTargetDirectoryName(path, dayOffset);
+        string groupName = ResolveTargetDirectoryName(path);
         string fileName = Path.GetFileName(path);
         string destinationPath = Path.Combine(target.FullName, groupName, fileName);
         await _writer.TryAddFile(fromPath: path, toPath: destinationPath, cancellationToken);
     }
 
-    private string ResolveTargetDirectoryName(string sourcePath, TimeSpan dayOffset)
+    private string ResolveTargetDirectoryName(string sourcePath)
     {
         DateTime createdAt = default;
         if (FileHelper.TryExtractMediaMetadataCreationDateTime(sourcePath, _console, out DateTime metadataDate) &&
@@ -167,13 +166,7 @@ public class MediaOrganizer : IMediaOrganizer
             return Constants.DEFAULT_SUBDIR_NAME;
         }
 
-        DateTime withOffset = createdAt - dayOffset;
-        if (createdAt.Date != withOffset.Date)
-        {
-            createdAt = withOffset;
-        }
-
-        string result = createdAt.ToMeorgDateString();
+        string result = createdAt.ToYearMonthDate();
 
         if (_suffixedTargetDirectoryLookup.TryGetValue(result, out string? suffixedSubDirName))
         {
