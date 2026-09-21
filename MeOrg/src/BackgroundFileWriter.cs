@@ -1,4 +1,6 @@
 using System.Threading.Channels;
+using MeOrg.Exceptions;
+using XmpCore.Options;
 
 namespace MeOrg;
 
@@ -9,6 +11,14 @@ public interface IBackgroundFileWriter
     void Shutdown();
 }
 
+public class BackgroundFileWriterOptions
+{
+    public int CopyRetryAttempts { get; init; } = 3;
+    public int MaxFailedCopies { get; init; } = 5;
+    public int MinFilesForProgressReport { get; init; } = 200;
+    public int RetryBackoffDelayCoefficient = 1000;
+}
+
 public class BackgroundFileWriter : IBackgroundFileWriter
 {
     private readonly Channel<(string fromPath, string toPath)> _fileChannel =
@@ -16,15 +26,21 @@ public class BackgroundFileWriter : IBackgroundFileWriter
     private readonly OrganizeRunMetrics _metrics;
     private readonly IConsole _console;
     private readonly IFileAccess _fileAccess;
-    private const int MIN_FILES_FOR_PROGRESS_REPORT = 200;
+    private readonly BackgroundFileWriterOptions _options;
     private bool _isStarted;
     private bool _shouldReportProgress;
+    public int FailedCopies { get; private set; }
 
-    public BackgroundFileWriter(OrganizeRunMetrics metrics, IConsole console, IFileAccess fileAccess)
+    public BackgroundFileWriter(
+        OrganizeRunMetrics metrics,
+        IConsole console,
+        IFileAccess fileAccess,
+        BackgroundFileWriterOptions options)
     {
         _metrics = metrics;
         _console = console;
         _fileAccess = fileAccess;
+        _options = options;
     }
 
     public async Task WriteFilesContinuously(CancellationToken cancellationToken)
@@ -36,51 +52,93 @@ public class BackgroundFileWriter : IBackgroundFileWriter
 
         _isStarted = true;
 
-        _shouldReportProgress = _metrics.TotalFileCount >= MIN_FILES_FOR_PROGRESS_REPORT;
+        _shouldReportProgress = _metrics.TotalFileCount >= _options.MinFilesForProgressReport;
 
         await foreach (var (from, to) in _fileChannel.Reader.ReadAllAsync(cancellationToken))
         {
-            try
+            int retryAttempt = 0;
+
+            while (retryAttempt <= _options.CopyRetryAttempts)
             {
-                string? directory = Path.GetDirectoryName(to);
-                if (directory != null && !_fileAccess.DirectoryExists(directory))
+                if (retryAttempt > 0)
                 {
-                    _fileAccess.CreateDirectory(directory);
+                    _console.WriteInfoLine($"Previous copy attempt failed, retrying with backoff (attempt {retryAttempt}/{_options.CopyRetryAttempts})");
+                    await Task.Delay(_options.RetryBackoffDelayCoefficient * (int)Math.Pow(retryAttempt, 2), cancellationToken); // Retry 1 = 1sec, Retry 2 = 4sec, Retry 3 = 9sec
                 }
 
-                if (!_fileAccess.FileExists(to))
+                try
                 {
-                    _fileAccess.CopyFile(from, to);
+                    string? directory = Path.GetDirectoryName(to);
+                    if (directory != null && !_fileAccess.DirectoryExists(directory))
+                    {
+                        _fileAccess.CreateDirectory(directory);
+                    }
+
+                    if (!_fileAccess.FileExists(to))
+                    {
+                        _fileAccess.CopyFile(from, to);
+
+                        _metrics.ReportFileCopied();
+
+                        if (retryAttempt > 0)
+                        {
+                            _console.WriteInfoLine($"Copy succeeded after '{retryAttempt}' retry attempts.");
+                        }
+
+                        break;
+                    }
+
+                    string suffixedName = to;
+                    do
+                    {
+                        suffixedName = FileHelper.GetFilepathWithIncrementedNumericalSuffix(suffixedName);
+                    }
+                    while (_fileAccess.FileExists(suffixedName));
+
+                    _fileAccess.CopyFile(from, suffixedName);
 
                     _metrics.ReportFileCopied();
 
-                    continue;
-                }
+                    if (retryAttempt > 0)
+                    {
+                        _console.WriteInfoLine($"Copy succeeded after '{retryAttempt}' retry attempts.");
+                    }
 
-                string suffixedName = to;
-                do
+                    break;
+                }
+                catch (IOException ioException)
                 {
-                    suffixedName = FileHelper.GetFilepathWithIncrementedNumericalSuffix(suffixedName);
+                    _console.WriteException(ioException);
+                    retryAttempt++;
                 }
-                while (_fileAccess.FileExists(suffixedName));
-
-                _fileAccess.CopyFile(from, suffixedName);
-
-                _metrics.ReportFileCopied();
-            }
-            catch (Exception ex)
-            {
-                _console.WriteException(ex);
-            }
-            finally
-            {
-                int currentStep = _metrics.CopyCount * 10 / _metrics.TotalFileCount;
-                int previousStep = (_metrics.CopyCount - 1) * 10 / _metrics.TotalFileCount;
-
-                if (_shouldReportProgress && currentStep > previousStep)
+                catch (Exception ex)
                 {
-                    _console.WriteInfoLine($"{_metrics.CopyCount}/{_metrics.TotalFileCount} files copied...");
+                    _console.WriteException(ex);
+                    FailedCopies++;
+                    _console.WriteErrorLine($"Non-retryable exception encountered. Failed copy allowance status: {FailedCopies}/{_options.MaxFailedCopies}.");
+                    break;
                 }
+                finally
+                {
+                    int currentStep = _metrics.CopyCount * 10 / _metrics.TotalFileCount;
+                    int previousStep = (_metrics.CopyCount - 1) * 10 / _metrics.TotalFileCount;
+
+                    if (_shouldReportProgress && currentStep > previousStep)
+                    {
+                        _console.WriteInfoLine($"{_metrics.CopyCount}/{_metrics.TotalFileCount} files copied...");
+                    }
+                }
+            }
+
+            if (retryAttempt > _options.CopyRetryAttempts)
+            {
+                FailedCopies++;
+                _console.WriteErrorLine($"Retries failed after '{retryAttempt}' attempts. Failed copy allowance status: {FailedCopies}/{_options.MaxFailedCopies}.");
+            }
+
+            if (FailedCopies >= _options.MaxFailedCopies)
+            {
+                throw new ErrorExitException(ExitCode.TooManyFailedCopies, $"Exiting due to high amount of failed copies. Failed copy amount: '{FailedCopies}'");
             }
         }
     }

@@ -80,4 +80,6 @@ public static class Constants
     };
 
     public const string YEAR_MONTH_DATE_FORMAT = "yyyy-MM";
+
+    public static readonly BackgroundFileWriterOptions DEFAULT_BACKGROUND_FILE_WRITER_OPTIONS = new();
 }

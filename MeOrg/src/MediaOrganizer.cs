@@ -119,10 +119,20 @@ public class MediaOrganizer : IMediaOrganizer
         _stopwatch.Restart();
 
         Task writerTask = Task.Run(() => _writer.WriteFilesContinuously(_cancellationToken), _cancellationToken);
-        await Parallel.ForEachAsync(
+        Task processingTask = Parallel.ForEachAsync(
             unseenFiles,
             _parallelOptions,
             (path, ct) => OrganizeFile(path, target, ct));
+
+        await Task.WhenAny(writerTask, processingTask);
+
+        // If writer dies before the processing task, surface exceptions
+        if (writerTask.IsCompleted && !processingTask.IsCompleted)
+        {
+            await writerTask;
+        }
+
+        await processingTask;
 
         _metrics.ReportSourceFileProcessingTime(_stopwatch.Elapsed);
 

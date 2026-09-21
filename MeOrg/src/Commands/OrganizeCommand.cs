@@ -37,7 +37,7 @@ public class OrganizeCommand : Command
         {
             var metrics = new OrganizeRunMetrics();
             var fileAccess = new FileAccess();
-            var writer = new BackgroundFileWriter(metrics, console, fileAccess);
+            var writer = new BackgroundFileWriter(metrics, console, fileAccess, Constants.DEFAULT_BACKGROUND_FILE_WRITER_OPTIONS);
 
             IDuplicateFileDetector duplicateDetector = parseResult.GetValue(skipDedupe) ?
                 new NoOpDuplicateFileDetector() :

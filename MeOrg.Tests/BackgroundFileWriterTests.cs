@@ -1,3 +1,4 @@
+using MeOrg.Exceptions;
 using Xunit.Abstractions;
 
 namespace MeOrg.Tests;
@@ -14,7 +15,14 @@ public class BackgroundFileWriterTests
         _metrics = new OrganizeRunMetrics();
         _console = new TestConsole(output, _metrics);
         _fileAccess = new MockFileAccess();
-        _writer = new BackgroundFileWriter(_metrics, _console, _fileAccess);
+        _writer = new BackgroundFileWriter(
+            _metrics,
+            _console,
+            _fileAccess,
+            options: new BackgroundFileWriterOptions
+            {
+                RetryBackoffDelayCoefficient = 0
+            });
     }
 
     [Fact(Timeout = 10000)]
@@ -68,5 +76,59 @@ public class BackgroundFileWriterTests
 
         List<string> progressLogs = _console.Logs.Where(log => log.EndsWith("files copied...")).ToList();
         Assert.Empty(progressLogs);
+    }
+
+    [Fact(Timeout = 20000)]
+    public async Task Writer_Retries_After_IO_Exception()
+    {
+        _metrics.ReportTotalFileCount(1);
+        Task writerTask = _writer.WriteFilesContinuously(CancellationToken.None);
+        _fileAccess.QueueIOExceptionOnCopy(amount: 2);
+        await _writer.TryAddFile($"test-from", "test-to", CancellationToken.None);
+        _writer.Shutdown();
+        await writerTask;
+
+        List<string> logs = _console.Logs.ToList();
+        Assert.StartsWith("System.IO.IOException: I/O error occurred.", logs[4]);
+        Assert.EndsWith("Previous copy attempt failed, retrying with backoff (attempt 1/3)", logs[3]);
+        Assert.StartsWith("System.IO.IOException: I/O error occurred.", logs[2]);
+        Assert.EndsWith("Previous copy attempt failed, retrying with backoff (attempt 2/3)", logs[1]);
+        Assert.EndsWith("Copy succeeded after '2' retry attempts.", logs[0]);
+        Assert.Equal(0, _writer.FailedCopies);
+    }
+
+    [Fact(Timeout = 10000)]
+    public async Task Writer_Does_Not_Retry_On_Generic_Exception()
+    {
+        _metrics.ReportTotalFileCount(1);
+        Task writerTask = _writer.WriteFilesContinuously(CancellationToken.None);
+        _fileAccess.QueueGenericExceptionOnCopy(amount: 1);
+        await _writer.TryAddFile($"test-from", "test-to", CancellationToken.None);
+        _writer.Shutdown();
+        await writerTask;
+
+        List<string> logs = _console.Logs.ToList();
+        Assert.Equal(2, logs.Count);
+        Assert.StartsWith("Non-retryable exception encountered. Failed copy allowance status: 1/", logs[0]);
+        Assert.StartsWith("System.Exception: Exception of type 'System.Exception' was thrown.", logs[1]);
+        Assert.Equal(1, _writer.FailedCopies);
+    }
+
+    [Fact(Timeout = 20000)]
+    public async Task Writer_Throws_Exit_Exception_After_Too_Many_Failed_Copies()
+    {
+        _metrics.ReportTotalFileCount(5);
+        Task writerTask = _writer.WriteFilesContinuously(CancellationToken.None);
+        _fileAccess.QueueGenericExceptionOnCopy(amount: 4);
+        for (int i = 0; i < 4; i++)
+        {
+            await _writer.TryAddFile($"test-from-{i}", $"test-to-{i}", CancellationToken.None);
+        }
+        _fileAccess.QueueIOExceptionOnCopy(amount: 4);
+        await _writer.TryAddFile($"test-from-with-io-ex", $"test-to-with-io-ex", CancellationToken.None);
+        ErrorExitException ex = await Assert.ThrowsAsync<ErrorExitException>(async () => await writerTask);
+        Assert.Equal(ExitCode.TooManyFailedCopies, ex.Code);
+        Assert.Equal("Exiting due to high amount of failed copies. Failed copy amount: '5'", ex.Message);
+        Assert.Equal(5, _writer.FailedCopies);
     }
 }
