@@ -64,6 +64,7 @@ Options:
   --source <source> (REQUIRED)  Unorganized media source directory.
   --target <target> (REQUIRED)  Directory where to copy your organized media.
   --skip-dedupe                 Disables duplicate detection.
+  -y, --yes-to-all              Automatically answer yes to all prompts.
   -?, -h, --help                Show help and usage information
 ```
 
