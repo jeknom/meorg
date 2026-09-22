@@ -91,12 +91,13 @@ public class MediaOrganizer : IMediaOrganizer
             }
         }
 
+        _cancellationToken.ThrowIfCancellationRequested();
         _stopwatch.Restart();
 
         IEnumerable<string> targetMediaPaths = Directory
             .EnumerateFiles(target.FullName, "*", SearchOption.AllDirectories)
             .Where(FileHelper.IsSupportedMediaFileExtension);
-        _duplicateDetector.MarkPathsAsSeen(targetMediaPaths);
+        _duplicateDetector.MarkPathsAsSeen(targetMediaPaths, _cancellationToken);
 
         _metrics.ReportTargetMediaHashGenerationTime(_stopwatch.Elapsed);
 
@@ -105,11 +106,17 @@ public class MediaOrganizer : IMediaOrganizer
         IEnumerable<string> supportedFiles = Directory
             .EnumerateFiles(source.FullName, "*", SearchOption.AllDirectories)
             .Where(FileHelper.IsSupportedMediaFileExtension);
-        List<string> unseenFiles = _duplicateDetector.MarkAndReturnUnseen(supportedFiles);
+        List<string> unseenFiles = _duplicateDetector.MarkAndReturnUnseen(supportedFiles, _cancellationToken);
 
-        if (unseenFiles.Count == 0 && !await _console.Confirm($"This operation will copy '{unseenFiles.Count}' files to target directory. Continue?", _cancellationToken))
+        if (unseenFiles.Count == 0)
         {
-            _console.WriteInfoLine("Organize canceled, have a nice day!");
+            _console.WriteInfoLine("Nothing new to organize in the source directory.");
+            return;
+        }
+
+        if (!await _console.Confirm($"This operation will copy '{unseenFiles.Count}' files to target directory. Continue?", _cancellationToken))
+        {
+            _console.WriteInfoLine("Okay, have a nice day!");
             return;
         }
 

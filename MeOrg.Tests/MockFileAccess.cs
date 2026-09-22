@@ -43,4 +43,11 @@ public class MockFileAccess : IFileAccess
     {
         amountOfGenericExceptionQueued += amount;
     }
+
+    // If this class is in use, it's assumed that there are no real files involved
+    // thus, it is enough to just return the path itself
+    public string GenerateSampledHashFromFile(string path)
+    {
+        return path;
+    }
 }

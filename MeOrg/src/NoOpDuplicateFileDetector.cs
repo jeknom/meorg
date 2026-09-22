@@ -8,11 +8,11 @@ public class NoOpDuplicateFileDetector : IDuplicateFileDetector
     {
     }
 
-    public void MarkPathsAsSeen(IEnumerable<string> paths)
+    public void MarkPathsAsSeen(IEnumerable<string> paths, CancellationToken ct)
     {
     }
 
-    public List<string> MarkAndReturnUnseen(IEnumerable<string> paths)
+    public List<string> MarkAndReturnUnseen(IEnumerable<string> paths, CancellationToken ct)
     {
         return paths.ToList();
     }

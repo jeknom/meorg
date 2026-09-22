@@ -1,34 +1,39 @@
 using System.Collections.Concurrent;
-using MeOrg.Extensions;
 
 namespace MeOrg;
 
 public interface IDuplicateFileDetector
 {
     int SeenCount { get; }
-    void MarkPathsAsSeen(IEnumerable<string> paths);
-    List<string> MarkAndReturnUnseen(IEnumerable<string> paths);
+    void MarkPathsAsSeen(IEnumerable<string> paths, CancellationToken ct);
+    List<string> MarkAndReturnUnseen(IEnumerable<string> paths, CancellationToken ct);
 }
 
 public class DuplicateFileDetector : IDuplicateFileDetector
 {
     private readonly ConcurrentDictionary<string, byte> _seen = new();
     private readonly OrganizeRunMetrics _metrics;
+    private readonly IFileAccess _fileAccess;
     private readonly IConsole _console;
 
     public int SeenCount => _seen.Count;
 
-    public DuplicateFileDetector(OrganizeRunMetrics metrics, IConsole console)
+    public DuplicateFileDetector(
+        OrganizeRunMetrics metrics,
+        IFileAccess fileAccess,
+        IConsole console)
     {
         _metrics = metrics;
+        _fileAccess = fileAccess;
         _console = console;
     }
 
-    public void MarkPathsAsSeen(IEnumerable<string> paths)
+    public void MarkPathsAsSeen(IEnumerable<string> paths, CancellationToken ct)
     {
         int count = 0;
         foreach (string path in paths)
         {
+            ct.ThrowIfCancellationRequested();
             TrySetFileSeen(path);
             count++;
         }
@@ -36,29 +41,32 @@ public class DuplicateFileDetector : IDuplicateFileDetector
         _console.WriteInfoLine($"Marked '{count}' files as seen.");
     }
 
-    public List<string> MarkAndReturnUnseen(IEnumerable<string> paths)
+    public List<string> MarkAndReturnUnseen(IEnumerable<string> paths, CancellationToken ct)
     {
-        var unseen = paths.Where((p) =>
+        List<string> result = new();
+        foreach (var path in paths)
         {
-            if (TrySetFileSeen(p))
+            ct.ThrowIfCancellationRequested();
+
+            if (TrySetFileSeen(path))
             {
-                return true;
+                result.Add(path);
+            }
+            else
+            {
+                _metrics.ReportDuplicateDetected();
             }
 
-            _metrics.ReportDuplicateDetected();
+        }
 
-            return false;
-        }).ToList();
+        _console.WriteInfoLine($"Found '{result.Count}' unseen files.");
 
-        _console.WriteInfoLine($"Found '{unseen.Count}' unseen files.");
-
-        return unseen;
+        return result;
     }
 
     private bool TrySetFileSeen(string path)
     {
-        using FileStream fileStream = File.OpenRead(path);
-        string hash = fileStream.GenerateSampledHash();
+        string hash = _fileAccess.GenerateSampledHashFromFile(path);
 
         return _seen.TryAdd(hash, 0);
     }

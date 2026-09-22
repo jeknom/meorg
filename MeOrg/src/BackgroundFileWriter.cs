@@ -1,6 +1,5 @@
 using System.Threading.Channels;
 using MeOrg.Exceptions;
-using XmpCore.Options;
 
 namespace MeOrg;
 
@@ -62,7 +61,7 @@ public class BackgroundFileWriter : IBackgroundFileWriter
             {
                 if (retryAttempt > 0)
                 {
-                    _console.WriteInfoLine($"Previous copy attempt failed, retrying with backoff (attempt {retryAttempt}/{_options.CopyRetryAttempts})");
+                    _console.WriteInfoLine($"Previous copy attempt failed for '{from}', retrying with backoff (attempt {retryAttempt}/{_options.CopyRetryAttempts})");
                     await Task.Delay(_options.RetryBackoffDelayCoefficient * (int)Math.Pow(retryAttempt, 2), cancellationToken); // Retry 1 = 1sec, Retry 2 = 4sec, Retry 3 = 9sec
                 }
 

@@ -90,9 +90,9 @@ public class BackgroundFileWriterTests
 
         List<string> logs = _console.Logs.ToList();
         Assert.StartsWith("System.IO.IOException: I/O error occurred.", logs[4]);
-        Assert.EndsWith("Previous copy attempt failed, retrying with backoff (attempt 1/3)", logs[3]);
+        Assert.EndsWith("Previous copy attempt failed for 'test-from', retrying with backoff (attempt 1/3)", logs[3]);
         Assert.StartsWith("System.IO.IOException: I/O error occurred.", logs[2]);
-        Assert.EndsWith("Previous copy attempt failed, retrying with backoff (attempt 2/3)", logs[1]);
+        Assert.EndsWith("Previous copy attempt failed for 'test-from', retrying with backoff (attempt 2/3)", logs[1]);
         Assert.EndsWith("Copy succeeded after '2' retry attempts.", logs[0]);
         Assert.Equal(0, _writer.FailedCopies);
     }
