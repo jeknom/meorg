@@ -19,6 +19,7 @@ RootCommand rootCommand = new("MeOrg is a media organizer CLI tool.");
 rootCommand.Subcommands.Add(new OrganizeCommand(cts.Token));
 rootCommand.Subcommands.Add(new VerifyDirectorySyncedCommand(cts.Token));
 rootCommand.Subcommands.Add(new HashCompareCommand(cts.Token));
+rootCommand.Subcommands.Add(new CountMediaFilesCommand());
 
 ParseResult parseResult = rootCommand.Parse(args);
 
