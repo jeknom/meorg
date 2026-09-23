@@ -8,4 +8,5 @@ public enum ExitCode
     Cancelled = 130,
     TooManyFailedCopies = 500,
     DirectoriesNotInSync = 501,
+    HashNotEqual = 502
 }
