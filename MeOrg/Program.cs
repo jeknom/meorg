@@ -17,6 +17,7 @@ using var sigTerm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx =>
 RootCommand rootCommand = new("MeOrg is a media organizer CLI tool.");
 
 rootCommand.Subcommands.Add(new OrganizeCommand(cts.Token));
+rootCommand.Subcommands.Add(new VerifyDirectorySyncedCommand(cts.Token));
 
 ParseResult parseResult = rootCommand.Parse(args);
 

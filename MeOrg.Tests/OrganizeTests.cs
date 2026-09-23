@@ -24,7 +24,7 @@ public class OrganizeTests : IDisposable
         _target = Directory.CreateDirectory(_targetPath);
         _stopwatch.Start();
         _metrics = new OrganizeRunMetrics();
-        _console = new TestConsole(output, _metrics);
+        _console = new TestConsole(output);
         _writer = new BackgroundFileWriter(_metrics, _console, _fileAccess, Constants.DEFAULT_BACKGROUND_FILE_WRITER_OPTIONS);
         _duplicateDetector = new DuplicateFileDetector(_metrics, _fileAccess, _console);
         _mediaOrganizer = new MediaOrganizer(_writer, _duplicateDetector, _metrics, _console, _cts.Token);

@@ -13,7 +13,7 @@ public class BackgroundFileWriterTests
     public BackgroundFileWriterTests(ITestOutputHelper output)
     {
         _metrics = new OrganizeRunMetrics();
-        _console = new TestConsole(output, _metrics);
+        _console = new TestConsole(output);
         _fileAccess = new MockFileAccess();
         _writer = new BackgroundFileWriter(
             _metrics,

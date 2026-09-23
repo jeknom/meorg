@@ -9,7 +9,7 @@ public class FileNameHelperTests
 
     public FileNameHelperTests(ITestOutputHelper output)
     {
-        _console = new TestConsole(output, new OrganizeRunMetrics());
+        _console = new TestConsole(output);
     }
 
     [Fact]

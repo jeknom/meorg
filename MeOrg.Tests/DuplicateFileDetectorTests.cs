@@ -12,7 +12,7 @@ public class DuplicateFileDetectorTests
 
     public DuplicateFileDetectorTests(ITestOutputHelper output)
     {
-        _console = new TestConsole(output, new OrganizeRunMetrics());
+        _console = new TestConsole(output);
         _metrics = new OrganizeRunMetrics();
         _fileAccess = new MockFileAccess();
         _detector = new DuplicateFileDetector(_metrics, _fileAccess, _console);

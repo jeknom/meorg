@@ -8,7 +8,7 @@ public class TestConsole : IConsole
     private readonly ITestOutputHelper _testOutput;
     public ConcurrentStack<string> Logs { get; private set; } = new();
 
-    public TestConsole(ITestOutputHelper testOutput, OrganizeRunMetrics metrics)
+    public TestConsole(ITestOutputHelper testOutput)
     {
         _testOutput = testOutput;
     }
